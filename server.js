@@ -11,6 +11,8 @@ import { getSoil, soilNotes } from './src/soil.js';
 import { getForecast, wateringAdvice } from './src/forecast.js';
 import { getNdvi } from './src/ndvi.js';
 import { validateCoords } from './src/nasaPower.js';
+import { getPlace } from './src/geo.js';
+import { getMandiPrices, MandiNotConfigured } from './src/mandi.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,6 +23,8 @@ export function createApp({
   soilSource = getSoil,
   forecastSource = getForecast,
   ndviSource = getNdvi,
+  placeSource = getPlace,
+  mandiSource = getMandiPrices,
   ask = askAssistant,
   assistantReady = hasClaudeKey,
 } = {}) {
@@ -28,7 +32,15 @@ export function createApp({
   app.use(express.json({ limit: '64kb' }));
   app.use(express.static(path.join(here, 'public')));
 
-  app.get('/api/health', (_req, res) => res.json({ ok: true }));
+  // Says which optional keys are set (yes/no only, never the values) and where the function runs.
+  app.get('/api/health', (_req, res) =>
+    res.json({
+      ok: true,
+      region: process.env.VERCEL_REGION ?? null,
+      ANTHROPIC_API_KEY: hasClaudeKey(),
+      DATA_GOV_IN_API_KEY: Boolean(process.env.DATA_GOV_IN_API_KEY),
+    }),
+  );
 
   app.get('/api/meta', (_req, res) =>
     res.json({ crops: CROP_IDS, irrigation: Object.keys(IRRIGATION_MM), priorities: PRIORITIES, languages: LANGUAGES }),
@@ -76,6 +88,21 @@ export function createApp({
       if (out.forecast) out.advice = wateringAdvice(out.forecast, out.soil?.texture);
       res.json(out);
     } catch (err) {
+      sendError(res, err);
+    }
+  });
+
+  // Today's mandi prices for the field's state (data.gov.in), with the farmer's district highlighted.
+  app.get('/api/mandi', async (req, res) => {
+    try {
+      const { lat, lon } = validateCoords(req.query.lat, req.query.lon);
+      const place = await placeSource(lat, lon);
+      if (!place?.state) return res.json({ state: null, crops: {}, reason: 'outside_india' });
+      res.json(await mandiSource(place.state, place.district));
+    } catch (err) {
+      if (err instanceof MandiNotConfigured) {
+        return res.status(503).json({ error: 'Mandi prices are not configured (DATA_GOV_IN_API_KEY).', code: 'not_configured' });
+      }
       sendError(res, err);
     }
   });

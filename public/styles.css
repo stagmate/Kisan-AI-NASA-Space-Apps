@@ -138,3 +138,13 @@ li.warn::before { content: "⚠️"; }
 .spark .grid { stroke: var(--line); stroke-dasharray: 4 4; }
 .spark .axis { font-size: 9px; fill: var(--muted); }
 .soil-dl { grid-template-columns: 1fr auto; margin-bottom: 8px; }
+
+/* mandi prices */
+.prices { list-style: none; padding: 0; margin: 8px 0; }
+.prices li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.prices li:last-child { border-bottom: 0; }
+.pname { font-weight: 600; }
+.pval { text-align: right; display: flex; flex-direction: column; }
+.pval small { color: var(--muted); font-size: .75rem; }
+.pval small.local { color: var(--good); }
+.pill.price { color: var(--good); }

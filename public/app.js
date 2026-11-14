@@ -1,7 +1,7 @@
 import { UI_LANGS, setLang, getLang, t, monthName, cropName, insightText } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { climate: null, plan: null, history: [], meta: null, field: null };
+const state = { climate: null, plan: null, history: [], meta: null, field: null, mandi: null };
 
 function store(key, value) {
   try {
@@ -42,6 +42,7 @@ function applyText() {
   if (state.climate) renderClimate();
   if (state.plan) renderPlans();
   if (state.field) renderField();
+  if (state.mandi) renderMandi();
 }
 
 function fillCropSelect() {
@@ -273,6 +274,7 @@ async function makePlan() {
   };
   store('planInput', body);
   setStatus(t('loading'));
+  loadMandi(c);
   try {
     const res = await api('/api/plan', { method: 'POST', body: JSON.stringify(body) });
     state.climate = res.climate;
@@ -283,6 +285,45 @@ async function makePlan() {
   } catch (err) {
     setStatus(t('error', { msg: err.message }), true);
   }
+}
+
+// ---------- mandi prices ----------
+let mandiRequest = 0;
+async function loadMandi(c) {
+  const id = ++mandiRequest;
+  try {
+    const res = await fetch(`/api/mandi?lat=${c.lat}&lon=${c.lon}`);
+    const body = await res.json().catch(() => ({}));
+    if (id !== mandiRequest) return;
+    // Not configured on this server: leave the card hidden rather than show an error.
+    state.mandi = res.ok ? body : body.code === 'not_configured' ? null : { error: body.error || `HTTP ${res.status}` };
+  } catch (err) {
+    if (id === mandiRequest) state.mandi = { error: err.message };
+  }
+  renderMandi();
+  if (state.plan) renderPlans();
+}
+
+const inr = (n) => Number(n).toLocaleString('en-IN');
+
+function renderMandi() {
+  const m = state.mandi;
+  const card = $('#mandi-card');
+  if (!m) return (card.hidden = true);
+  card.hidden = false;
+  if (m.error) return ($('#mandi').innerHTML = `<p class="hint">${esc(t('src_unavailable', { name: 'data.gov.in' }))}</p>`);
+  if (m.reason === 'outside_india') return ($('#mandi').innerHTML = `<p class="hint">${esc(t('mandi_outside'))}</p>`);
+  const entries = Object.entries(m.crops ?? {}).sort((a, b) => b[1].markets - a[1].markets);
+  if (!entries.length) return ($('#mandi').innerHTML = `<p class="hint">${esc(t('mandi_none', { state: m.state }))}</p>`);
+  const date = entries.map(([, v]) => v.date).filter(Boolean).sort().at(-1);
+  const total = entries.reduce((s, [, v]) => s + v.markets, 0);
+  $('#mandi').innerHTML = `<p class="hint">${esc(t('mandi_state', { n: total, state: m.state, date: date ? formatDate(date) : '' }))}</p>
+    <ul class="prices">${entries.map(([crop, v]) => `<li>
+      <span class="pname">${esc(cropName(crop))}</span>
+      <span class="pval"><b>${esc(t('mandi_per_q', { price: inr(v.modal) }))}</b>
+        <small>${esc(t('mandi_range', { low: inr(v.low), high: inr(v.high) }))}</small>
+        ${v.local ? `<small class="local">${esc(t('mandi_local', { price: inr(v.local.modal), market: v.local.example }))}</small>` : ''}</span>
+    </li>`).join('')}</ul>`;
 }
 
 function renderPlans() {
@@ -296,6 +337,7 @@ function renderPlans() {
       <li class="step ${pk.season}">
         <span class="season-tag">${esc(t(`season_${pk.season}`))}</span>
         <strong>${esc(cropName(pk.crop))}</strong>
+        ${state.mandi?.crops?.[pk.crop] ? `<span class="pill price">${esc(t('mandi_per_q', { price: inr(state.mandi.crops[pk.crop].modal) }))}</span>` : ''}
         ${pk.warnings.map((w) => `<span class="pill warn">${esc(t(`w_${w}`))}</span>`).join('')}
       </li>`).join('');
     const parts = ['fit', 'soil', 'water', 'income'].map((k) => `
@@ -328,6 +370,7 @@ function fieldContext() {
     lastCrop: state.plan?.input.lastCrop ?? undefined,
     plan: state.plan?.plans[0]?.picks.map((p) => `${p.season}: ${p.crop}`),
     soil: state.field?.soil ?? state.plan?.soil ?? undefined,
+    mandi: state.mandi?.crops ? { state: state.mandi.state, crops: state.mandi.crops } : undefined,
     soilMoisture: state.field?.forecast?.soilMoisture,
     advice: state.field?.advice,
     ndvi: state.field?.ndvi ? { latest: state.field.ndvi.latest, status: state.field.ndvi.status, trend: state.field.ndvi.trend } : undefined,

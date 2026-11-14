@@ -27,6 +27,17 @@ None of these need an API key.
 | [ISRIC SoilGrids 2.0](https://www.isric.org/explore/soilgrids) (250 m) | Sand/silt/clay → texture class and water-holding range; pH; organic carbon (0–30 cm) | `src/soil.js` |
 | [Open-Meteo](https://open-meteo.com/) forecast | 7-day rain, rain chance, FAO reference evapotranspiration, temperatures, and modelled soil moisture 0–27 cm | `src/forecast.js` |
 
+**Optional, needs a free key:**
+
+| Source | Used for | Module |
+|---|---|---|
+| [data.gov.in](https://www.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi) daily mandi prices (Agmarknet), with the field's state and district from [OpenStreetMap Nominatim](https://nominatim.org/) | Median modal price (₹/quintal) per crop across the state's mandis, range, and the farmer's district; shown on the Crop plan tab and given to the assistant | `src/mandi.js`, `src/geo.js` |
+
+Set it up: sign in at data.gov.in → **My Account → Generate API Key**, then add `DATA_GOV_IN_API_KEY` in
+Vercel (Project → Settings → Environment Variables, Production) and redeploy. data.gov.in only answers servers in
+India, so the project's function region is Mumbai (`bom1`). `/api/health` shows the region and whether the key is
+set (true/false, never the value). Without a key the prices card simply stays hidden.
+
 How they combine:
 - **Watering advice**: root-zone soil moisture is turned into "% of plant-available water" using the SoilGrids texture's field capacity and wilting point; ≥ 15 mm of rain in 3 days → hold; < 35% → water now; < 60% and a dry week → water in 2 days. The amount refills the top 30 cm.
 - **Crop plan**: SoilGrids pH penalises crops outside their pH range; heavier soils carry more monsoon water into Rabi.

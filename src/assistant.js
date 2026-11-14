@@ -26,7 +26,7 @@ How to answer:
 - Give practical, low-cost steps first. Mention local units (acre, bigha, quintal) when useful.
 - Base climate statements on the NASA POWER data in the field context. If the data does not cover the question, say so instead of guessing.
 - For pesticides or chemicals, prefer integrated pest management, give safety precautions, and suggest checking with the local Krishi Vigyan Kendra (KVK) or agriculture officer for doses.
-- Never invent prices, government schemes or subsidy amounts. Point to official sources instead.
+- Never invent prices, government schemes or subsidy amounts. Use only the mandi prices in the field context, say they are today's reported prices, and suggest checking the local mandi before selling.
 - Keep answers under about 180 words unless the farmer asks for more detail.`;
 
 let client = null;
@@ -50,6 +50,12 @@ export function formatContext(ctx) {
   if (ctx.soilMoisture != null) lines.push(`Root-zone soil moisture now (Open-Meteo model): ${ctx.soilMoisture} m³/m³`);
   if (ctx.advice) lines.push(`Watering advice shown to farmer: ${ctx.advice.code}${ctx.advice.amountMm ? ` (~${ctx.advice.amountMm} mm)` : ''}; rain next 7 days ${ctx.advice.rain7} mm vs crop demand ${ctx.advice.et7} mm`);
   if (ctx.ndvi?.latest) lines.push(`Satellite greenness (NASA MODIS NDVI) on ${ctx.ndvi.latest.date}: ${ctx.ndvi.latest.ndvi} (${ctx.ndvi.status}${ctx.ndvi.trend ? `, ${ctx.ndvi.trend} over the last month` : ''})`);
+  if (ctx.mandi?.crops) {
+    const prices = Object.entries(ctx.mandi.crops)
+      .slice(0, 12)
+      .map(([crop, v]) => `${crop} ₹${v.modal}/quintal (${v.markets} reports${v.date ? `, ${v.date}` : ''})`);
+    if (prices.length) lines.push(`Today's mandi modal prices in ${ctx.mandi.state} (data.gov.in): ${prices.join('; ')}`);
+  }
   if (ctx.irrigation) lines.push(`Irrigation available: ${ctx.irrigation}`);
   if (ctx.lastCrop) lines.push(`Last crop: ${ctx.lastCrop}`);
   if (Array.isArray(ctx.plan) && ctx.plan.length) lines.push(`Suggested rotation: ${ctx.plan.join(' → ')}`);

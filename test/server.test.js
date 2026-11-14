@@ -93,3 +93,26 @@ test('a point with no soil map is reported as soilMissing, not as an outage', as
   assert.equal(body.errors.soil, undefined);
   s.close();
 });
+
+test('GET /api/mandi: prices for the field state; 503 code when no key; outside India', async () => {
+  const { MandiNotConfigured } = await import('../src/mandi.js');
+  const mk = (opts) => {
+    const a = createApp(opts);
+    const s = a.listen(0);
+    return new Promise((r) => s.once('listening', () => r(s)));
+  };
+  const s1 = await mk({ placeSource: async () => ({ state: 'Karnataka', district: 'Bengaluru' }), mandiSource: async (st) => ({ state: st, crops: { onion: { modal: 2400 } } }) });
+  const b1 = await (await fetch(`http://127.0.0.1:${s1.address().port}/api/mandi?lat=13.1&lon=77.45`)).json();
+  assert.equal(b1.state, 'Karnataka');
+  assert.equal(b1.crops.onion.modal, 2400);
+  s1.close();
+  const s2 = await mk({ placeSource: async () => ({ state: 'Karnataka' }), mandiSource: async () => { throw new MandiNotConfigured('x'); } });
+  const r2 = await fetch(`http://127.0.0.1:${s2.address().port}/api/mandi?lat=13.1&lon=77.45`);
+  assert.equal(r2.status, 503);
+  assert.equal((await r2.json()).code, 'not_configured');
+  s2.close();
+  const s3 = await mk({ placeSource: async () => null });
+  const b3 = await (await fetch(`http://127.0.0.1:${s3.address().port}/api/mandi?lat=40&lon=-100`)).json();
+  assert.equal(b3.reason, 'outside_india');
+  s3.close();
+});
