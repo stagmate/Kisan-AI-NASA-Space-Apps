@@ -34,8 +34,9 @@ main { max-width: 760px; margin: 0 auto; padding: 0 16px 32px; }
 .tagline { margin: 0; font-size: .85rem; opacity: .9; }
 .top select { background: var(--card); color: var(--text); width: auto; min-width: 7.5em; padding: 8px 6px; }
 
-.tabs { position: sticky; top: 0; z-index: 2; display: flex; background: var(--card); border-bottom: 1px solid var(--line); }
-.tabs button { flex: 1; border: 0; border-radius: 0; background: none; color: var(--muted); padding: 14px 8px; font-weight: 600; border-bottom: 3px solid transparent; }
+.tabs { position: sticky; top: 0; z-index: 2; display: flex; background: var(--card); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 1 0 auto; white-space: nowrap; border: 0; border-radius: 0; background: none; color: var(--muted); padding: 14px 8px; font-weight: 600; border-bottom: 3px solid transparent; }
 .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-top: 16px; }
@@ -211,3 +212,11 @@ table.monthly { border-collapse: collapse; font-size: .78rem; width: 100%; min-w
 .zone-modes { border: 0; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .zone-modes label { flex-direction: row; align-items: center; gap: 4px; color: var(--text); }
 .leaflet-container { font: inherit; }
+
+/* learn */
+.learn-intro { margin: 16px 0 0; }
+details.learn summary { cursor: pointer; font-weight: 600; font-size: 1rem; }
+details.learn p { margin: 10px 0 0; }
+details.learn[open] summary { color: var(--accent); }
+
+a { color: var(--accent); }

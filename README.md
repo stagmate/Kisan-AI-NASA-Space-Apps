@@ -4,9 +4,15 @@ A phone-first planning tool for small farmers in India, built on **NASA POWER** 
 
 | Tab | What it does |
 |---|---|
-| **Climate** | **Watering this week** (water now / in 2 days / hold for rain / no need, with an amount) from the 7-day forecast and modelled root-zone soil moisture; **crop health from satellite** (NASA MODIS NDVI, last 8 months, cloudy images removed); **your soil** (texture, pH, organic carbon with advice); and long-term monthly rain and temperature split into Kharif (Jun–Oct), Rabi (Nov–Mar) and Zaid (Apr–May) with plain-language warnings. |
-| **Crop plan** | Suggests 3 one-year rotations (Kharif → Rabi → Zaid) that fit the local climate and soil pH, the farmer's irrigation, last crop and priority (balanced / income / soil health / save water), with a score breakdown and reasons. |
-| **Ask** | An AI farm assistant (Claude) that answers in 9 languages (English, Hindi, Tamil, Kannada, Malayalam, Telugu, Marathi, Bengali, Punjabi), grounded in that field's NASA climate data and crop plan. Voice input and read-aloud where the browser supports it. |
+| **Climate** | **Watering this week** from the 7-day forecast and modelled root-zone soil moisture; **crop health from satellite** (MODIS NDVI); **season timeline & stress check** (bare / green-up / peak / decline from NDVI, declines explained by soil-moisture anomaly, heat or low rain, greenness vs past years, confidence level, month-by-month harmonised data table); **your soil** (SoilGrids); long-term climate by Kharif/Rabi/Zaid with warnings. |
+| **Map** | Tap to choose the field. NASA GIBS layers with a date slider and transparency: MODIS NDVI, SMAP L4 root-zone soil moisture, GPM IMERG rain, MODIS land-surface temperature, HLS 30 m imagery, GRACE water storage (2003–2022), GEDI biomass. **Field zones** on a 7×7 grid of 250 m pixels: erosion risk (slope × bare ground), water-stress hotspots, frost-prone low spots. |
+| **Crop plan** | Three Kharif → Rabi → Zaid rotations compared on **eight criteria** — nutrients, erosion protection, organic matter, pest-cycle break, water, fodder, income (today's mandi price × typical yield) and drought safety. Farmer inputs: water, last crop, priority, little labour/no machines, fodder needs, crops to avoid, and **what-if rainfall/temperature sliders**. Explains how nitrogen-fixing, cover, deep-rooted and drought-tolerant crops help; mandi prices card. |
+| **Ask** | AI farm assistant (Claude) in 9 languages, grounded in the field's climate, soil, forecast, satellite timeline and prices; told to state uncertainty and defer to local experts. Voice in/out. |
+| **Learn** | Plain-language explanations of evapotranspiration, soil-moisture anomaly, NDVI, frost risk, water balance, satellite vs ground measurements, crop roles, and where the farmer's judgment matters most. |
+
+**[Methods page](public/methods.html)** (in the app at `/methods.html`): data sources and resolutions, how datasets are
+harmonised onto common grids, comparison of rule-based, anomaly, phenology-fitting, machine-learning and LLM approaches,
+rotation scoring, uncertainty, where local experts must validate, and next steps.
 
 The interface is available in **English, हिन्दी (Hindi), தமிழ் (Tamil), ಕನ್ನಡ (Kannada), മലയാളം (Malayalam) and తెలుగు (Telugu)**,
 including crop names, month names and every warning. Voice input and read-aloud use each language's Indian locale.
