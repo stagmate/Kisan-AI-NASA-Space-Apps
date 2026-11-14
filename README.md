@@ -10,6 +10,8 @@ A phone-first planning tool for small farmers in India, built on **NASA POWER** 
 | **Ask** | AI farm assistant (Claude) in 9 languages, grounded in the field's climate, soil, forecast, satellite timeline and prices; told to state uncertainty and defer to local experts. Voice in/out. |
 | **Learn** | Plain-language explanations of evapotranspiration, soil-moisture anomaly, NDVI, frost risk, water balance, satellite vs ground measurements, crop roles, and where the farmer's judgment matters most. |
 
+**[Full technical documentation](docs/DOCUMENTATION.md)** — every dataset, algorithm, threshold, API endpoint and test.
+
 **[Methods page](public/methods.html)** (in the app at `/methods.html`): data sources and resolutions, how datasets are
 harmonised onto common grids, comparison of rule-based, anomaly, phenology-fitting, machine-learning and LLM approaches,
 rotation scoring, uncertainty, where local experts must validate, and next steps.
