@@ -203,7 +203,7 @@ function fieldContext() {
   };
 }
 
-const SPEECH_LOCALES = { en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN', pa: 'pa-IN' };
+const SPEECH_LOCALES = { en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', bn: 'bn-IN', ta: 'ta-IN', te: 'te-IN', pa: 'pa-IN', kn: 'kn-IN', ml: 'ml-IN' };
 
 function addMessage(role, text) {
   const div = document.createElement('div');
@@ -276,11 +276,17 @@ function setupMic() {
 async function init() {
   const uiSel = $('#ui-lang');
   uiSel.innerHTML = Object.entries(UI_LANGS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-  setLang(store('uiLang') ?? (navigator.language?.startsWith('hi') ? 'hi' : 'en'));
+  setLang(store('uiLang') ?? (navigator.language ?? 'en').slice(0, 2));
   uiSel.value = getLang();
   uiSel.onchange = () => {
     setLang(uiSel.value);
     store('uiLang', uiSel.value);
+    // Answer in the language the farmer just picked for the app.
+    const askSel = $('#ask-lang');
+    if ([...askSel.options].some((o) => o.value === uiSel.value)) {
+      askSel.value = uiSel.value;
+      store('askLang', uiSel.value);
+    }
     applyText();
   };
 
@@ -317,6 +323,7 @@ async function init() {
   const askSel = $('#ask-lang');
   askSel.innerHTML = Object.entries(state.meta.languages).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
   askSel.value = store('askLang') ?? getLang();
+  if (!askSel.value) askSel.value = 'en';
   applyText();
 
 

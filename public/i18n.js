@@ -1,6 +1,20 @@
-// UI text in English and Hindi. The assistant itself can answer in more languages (see /api/meta).
+// UI text. English and Hindi live here; regional languages are one file each in ./lang/.
+// The assistant can answer in every language listed by /api/meta.
+import ta from './lang/ta.js';
+import kn from './lang/kn.js';
+import ml from './lang/ml.js';
+import te from './lang/te.js';
 
-export const UI_LANGS = { en: 'English', hi: 'हिन्दी' };
+const REGIONAL = { ta, kn, ml, te };
+
+export const UI_LANGS = {
+  en: 'English',
+  hi: 'हिन्दी',
+  ta: 'தமிழ்',
+  kn: 'ಕನ್ನಡ',
+  ml: 'മലയാളം',
+  te: 'తెలుగు',
+};
 
 const MONTHS = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -185,6 +199,12 @@ const CROP_NAMES = {
   },
 };
 
+for (const [code, pack] of Object.entries(REGIONAL)) {
+  MONTHS[code] = pack.months;
+  STRINGS[code] = pack.strings;
+  CROP_NAMES[code] = pack.crops;
+}
+
 let current = 'en';
 export function setLang(lang) {
   current = UI_LANGS[lang] ? lang : 'en';
@@ -213,4 +233,4 @@ export function insightText(ins) {
   });
 }
 
-export const _test = { STRINGS, CROP_NAMES };
+export const _test = { STRINGS, CROP_NAMES, MONTHS };

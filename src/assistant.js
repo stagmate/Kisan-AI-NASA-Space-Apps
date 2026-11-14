@@ -10,6 +10,8 @@ export const LANGUAGES = {
   bn: 'Bengali (বাংলা)',
   ta: 'Tamil (தமிழ்)',
   te: 'Telugu (తెలుగు)',
+  kn: 'Kannada (ಕನ್ನಡ)',
+  ml: 'Malayalam (മലയാളം)',
   pa: 'Punjabi (ਪੰਜਾਬੀ)',
 };
 

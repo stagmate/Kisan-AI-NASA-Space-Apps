@@ -6,9 +6,15 @@ A phone-first planning tool for small farmers in India, built on **NASA POWER** 
 |---|---|
 | **Climate** | Long-term monthly rain and temperature for any location (GPS, a preset city, or lat/lon), split into the Indian cropping seasons — Kharif (Jun–Oct), Rabi (Nov–Mar), Zaid (Apr–May) — with plain-language warnings: monsoon dependence, heat, frost, dry Rabi. |
 | **Crop plan** | Suggests 3 one-year rotations (Kharif → Rabi → Zaid) that fit the local climate, the farmer's irrigation, last crop and priority (balanced / income / soil health / save water), with a score breakdown and reasons. |
-| **Ask** | An AI farm assistant (Claude) that answers in 7 languages (English, Hindi, Marathi, Bengali, Tamil, Telugu, Punjabi), grounded in that field's NASA climate data and crop plan. Voice input and read-aloud where the browser supports it. |
+| **Ask** | An AI farm assistant (Claude) that answers in 9 languages (English, Hindi, Tamil, Kannada, Malayalam, Telugu, Marathi, Bengali, Punjabi), grounded in that field's NASA climate data and crop plan. Voice input and read-aloud where the browser supports it. |
 
-The interface is available in English and Hindi.
+The interface is available in **English, हिन्दी (Hindi), தமிழ் (Tamil), ಕನ್ನಡ (Kannada), മലയാളം (Malayalam) and తెలుగు (Telugu)**,
+including crop names, month names and every warning. Voice input and read-aloud use each language's Indian locale.
+
+> **Translations need a native-speaker check.** Tamil, Kannada, Malayalam and Telugu were written with AI help.
+> Each is one file in `public/lang/<code>.js` — keep the `{placeholders}` unchanged (`npm test` checks every key,
+> placeholder, crop and month). To add a language, copy one of these files, translate it, and register it in
+> `public/i18n.js` and `src/assistant.js`.
 
 ## NASA data
 
