@@ -21,6 +21,7 @@
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="climate" aria-selected="true" data-i18n="tab_climate"></button>
+    <button role="tab" data-tab="map" aria-selected="false" data-i18n="tab_map"></button>
     <button role="tab" data-tab="plan" aria-selected="false" data-i18n="tab_plan"></button>
     <button role="tab" data-tab="ask" aria-selected="false" data-i18n="tab_ask"></button>
   </nav>
@@ -82,6 +83,45 @@
         <h3 data-i18n="insights"></h3>
         <ul id="insights" class="insights"></ul>
         <p class="source" data-i18n="source"></p>
+      </div>
+    </section>
+
+    <section id="tab-map" class="tab-panel" hidden>
+      <div class="card map-card">
+        <p class="hint" data-i18n="map_hint"></p>
+        <div id="map" class="map"></div>
+        <button id="map-use" data-i18n="map_use_point" disabled></button>
+        <div class="map-controls">
+          <label class="grow"><span data-i18n="map_layer"></span>
+            <select id="map-layer">
+              <option value="" data-i18n="ly_none"></option>
+              <option value="ndvi" data-i18n="ly_ndvi"></option>
+              <option value="smap" data-i18n="ly_smap"></option>
+              <option value="rain" data-i18n="ly_rain"></option>
+              <option value="lst" data-i18n="ly_lst"></option>
+              <option value="hls" data-i18n="ly_hls"></option>
+              <option value="grace" data-i18n="ly_grace"></option>
+              <option value="gedi" data-i18n="ly_gedi"></option>
+            </select>
+          </label>
+          <label><span id="map-date-label"></span><input type="range" id="map-date" min="0" max="364" value="364" disabled></label>
+          <label><span data-i18n="map_opacity"></span><input type="range" id="map-opacity" min="0.2" max="1" step="0.1" value="0.7"></label>
+          <label class="inline"><input type="checkbox" id="map-base"> <span data-i18n="map_base"></span></label>
+          <p class="hint" id="map-legend"></p>
+        </div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="zones_title"></h2>
+        <fieldset class="zone-modes">
+          <label><input type="radio" name="zone-mode" value="ndvi" checked> <span data-i18n="zm_ndvi"></span></label>
+          <label><input type="radio" name="zone-mode" value="erosion"> <span data-i18n="zm_erosion"></span></label>
+          <label><input type="radio" name="zone-mode" value="stress"> <span data-i18n="zm_stress"></span></label>
+          <label><input type="radio" name="zone-mode" value="frost"> <span data-i18n="zm_frost"></span></label>
+        </fieldset>
+        <p id="zone-legend" class="hint"></p>
+        <p id="zones-summary"></p>
+        <p class="judgment">🧑‍🌾 <span data-i18n="z_judgment"></span></p>
+        <p class="source" data-i18n="map_source"></p>
       </div>
     </section>
 

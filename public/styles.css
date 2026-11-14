@@ -201,3 +201,13 @@ table.monthly { border-collapse: collapse; font-size: .78rem; width: 100%; min-w
 .monthly thead th { font-weight: 600; color: var(--muted); white-space: normal; vertical-align: bottom; }
 .monthly small { display: block; font-size: .68rem; color: var(--muted); }
 .monthly .neg { color: var(--warn); }
+
+/* map */
+.map { height: 360px; border-radius: 10px; margin: 8px 0; z-index: 0; }
+.map-card #map-use { width: 100%; }
+.map-controls { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.map-controls input[type=range] { width: 100%; padding: 0; accent-color: var(--accent); }
+.map-controls label.inline { flex-direction: row; align-items: center; gap: 6px; color: var(--text); }
+.zone-modes { border: 0; padding: 0; margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.zone-modes label { flex-direction: row; align-items: center; gap: 4px; color: var(--text); }
+.leaflet-container { font: inherit; }

@@ -12,6 +12,7 @@ import { getForecast, wateringAdvice } from './src/forecast.js';
 import { getNdvi, getNdviNormal } from './src/ndvi.js';
 import { validateCoords, getDaily } from './src/nasaPower.js';
 import { analyzeTimeline } from './src/timeline.js';
+import { getZones } from './src/zones.js';
 import { getPlace } from './src/geo.js';
 import { getMandiPrices, MandiNotConfigured } from './src/mandi.js';
 
@@ -26,6 +27,7 @@ export function createApp({
   ndviSource = getNdvi,
   placeSource = getPlace,
   dailySource = getDaily,
+  zonesSource = getZones,
   ndviNormalSource = getNdviNormal,
   mandiSource = getMandiPrices,
   ask = askAssistant,
@@ -123,6 +125,19 @@ export function createApp({
           })
         : null;
       res.json(analyzeTimeline({ daily, climatologyMonths: climate.months, ndvi, normal }));
+    } catch (err) {
+      sendError(res, err);
+    }
+  });
+
+  // Field-level zones: erosion risk, water-stress hotspots and frost-prone low spots on a 250 m grid.
+  app.get('/api/zones', async (req, res) => {
+    try {
+      const { lat, lon } = validateCoords(req.query.lat, req.query.lon);
+      // Only look for frost pockets where nights get near freezing in some month.
+      const climate = await climateSource(lat, lon).catch(() => null);
+      const frostClimate = Boolean(climate?.months?.some((m) => (m.nightLow ?? m.tempMin ?? 99) <= 4 || (m.tempMin ?? 99) <= 0));
+      res.json({ frostClimate, ...(await zonesSource(lat, lon, { frostClimate })) });
     } catch (err) {
       sendError(res, err);
     }

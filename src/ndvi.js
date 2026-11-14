@@ -7,17 +7,17 @@
 import { fromUrl } from 'geotiff';
 import { fetchJson, makeCache, roundCoord } from './http.js';
 
-const STAC_SEARCH = 'https://planetarycomputer.microsoft.com/api/stac/v1/search';
-const TOKEN_BASE = 'https://planetarycomputer.microsoft.com/api/sas/v1/token';
-const NDVI_ASSET = '250m_16_days_NDVI';
-const QA_ASSET = '250m_16_days_pixel_reliability';
-const SPHERE_RADIUS = 6371007.181; // MODIS sinusoidal grid sphere (m)
-const GRID_X0 = -20015109.354; // left edge of tile h00
-const GRID_Y0 = 10007554.677; // top edge of tile v00
-const TILE_SIZE = 1111950.5197; // metres per tile
-const TILE_PIXELS = 4800; // 250 m product
+export const STAC_SEARCH = 'https://planetarycomputer.microsoft.com/api/stac/v1/search';
+export const TOKEN_BASE = 'https://planetarycomputer.microsoft.com/api/sas/v1/token';
+export const NDVI_ASSET = '250m_16_days_NDVI';
+export const QA_ASSET = '250m_16_days_pixel_reliability';
+export const SPHERE_RADIUS = 6371007.181; // MODIS sinusoidal grid sphere (m)
+export const GRID_X0 = -20015109.354; // left edge of tile h00
+export const GRID_Y0 = 10007554.677; // top edge of tile v00
+export const TILE_SIZE = 1111950.5197; // metres per tile
+export const TILE_PIXELS = 4800; // 250 m product
 const cached = makeCache(12 * 60 * 60 * 1000);
-const tokenCache = makeCache(30 * 60 * 1000);
+export const tokenCache = makeCache(30 * 60 * 1000);
 
 /** Latitude/longitude → MODIS sinusoidal metres. */
 export function toSinusoidal(lat, lon) {

@@ -1,4 +1,5 @@
 import { renderAnswer, plainAnswer } from './format.js';
+import { createMap } from './map.js';
 import { UI_LANGS, setLang, getLang, t, monthName, cropName, insightText } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -47,6 +48,7 @@ function applyText() {
   if (state.field) renderField();
   if (state.mandi) renderMandi();
   if (state.timeline) renderTimeline();
+  mapView.refreshText();
 }
 
 function fillCropSelect() {
@@ -63,6 +65,7 @@ function showTab(name) {
   document.querySelectorAll('[role=tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   document.querySelectorAll('.tab-panel').forEach((p) => (p.hidden = p.id !== `tab-${name}`));
   store('tab', name);
+  if (name === 'map') mapView.show(api).catch((err) => setStatus(t('error', { msg: err.message }), true));
 }
 
 // ---------- location ----------
@@ -79,12 +82,34 @@ function setCoords(lat, lon) {
   store('coords', { lat, lon });
 }
 
+let lastFieldKey = null;
+const mapView = createMap({
+  el: document.getElementById('map'),
+  t: (...a) => t(...a),
+  esc,
+  formatDate: (d) => formatDate(d),
+  getField: () => getCoords(),
+  onUseField: (p) => {
+    setCoords(p.lat, p.lon);
+    $('#preset').value = '';
+    loadClimate();
+  },
+  // The slope at the field feeds the erosion score in the crop plan.
+  onZones: (z) => {
+    state.slopePct = z.centre?.slopePct ?? 0;
+  },
+});
+
 async function loadClimate() {
   const c = getCoords();
   if (!c) return setStatus(t('need_location'), true);
   store('coords', c);
   setStatus(t('loading'));
   loadField(c);
+  if (lastFieldKey !== `${c.lat},${c.lon}`) {
+    lastFieldKey = `${c.lat},${c.lon}`;
+    mapView.fieldChanged(c, api);
+  }
   try {
     state.climate = await api(`/api/climate?lat=${c.lat}&lon=${c.lon}`);
     state.plan = null;
@@ -351,6 +376,7 @@ async function makePlan() {
       avoid: [...document.querySelectorAll('#avoid-list input:checked')].map((i) => i.value),
     },
     scenario: { rainPct: Number($('#sc-rain').value), tempC: Number($('#sc-temp').value) },
+    slopePct: state.slopePct ?? 0,
   };
   store('planInput', body);
   setStatus(t('loading'));
