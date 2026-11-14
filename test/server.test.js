@@ -15,6 +15,7 @@ before(async () => {
     },
     ask: async ({ question }) => ({ answer: `echo: ${question}`, refused: false }),
     assistantReady: () => true,
+    placeSource: async () => null,
     soilSource: async () => ({ clay: 30, sand: 40, silt: 30, ph: 6.8, organicCarbon: 9, texture: 'clay_loam', water: { fc: 0.34, wp: 0.2 } }),
     forecastSource: async () => ({ days: Array.from({ length: 7 }, (_, i) => ({ date: `2026-11-${14 + i}`, rainMm: 0, et0Mm: 4 })), soilMoisture: 0.22 }),
     ndviSource: async () => { throw new Error('MODIS: timed out'); },

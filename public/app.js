@@ -40,6 +40,8 @@ function applyText() {
   });
   $('#question').placeholder = t('ask_placeholder');
   fillCropSelect();
+  fillAvoidList();
+  updateScenarioLabels();
   if (state.climate) renderClimate();
   if (state.plan) renderPlans();
   if (state.field) renderField();
@@ -272,6 +274,12 @@ async function makePlan() {
     irrigation: $('#irrigation').value,
     lastCrop: $('#last-crop').value || null,
     priority: document.querySelector('input[name=priority]:checked').value,
+    constraints: {
+      lowLabour: $('#low-labour').checked,
+      needFodder: $('#need-fodder').checked,
+      avoid: [...document.querySelectorAll('#avoid-list input:checked')].map((i) => i.value),
+    },
+    scenario: { rainPct: Number($('#sc-rain').value), tempC: Number($('#sc-temp').value) },
   };
   store('planInput', body);
   setStatus(t('loading'));
@@ -327,10 +335,14 @@ function renderMandi() {
     </li>`).join('')}</ul>`;
 }
 
+const CRITERIA = ['nutrient', 'erosion', 'organic', 'pest', 'water', 'forage', 'market', 'drought'];
+
 function renderPlans() {
   const { plans } = state.plan;
+  $('#plan-judgment').hidden = false;
   if (!plans.length) {
     $('#plans').innerHTML = `<div class="card"><p>${esc(t('no_plans'))}</p></div>`;
+    $('#compare-card').hidden = true;
     return;
   }
   $('#plans').innerHTML = plans.map((p, idx) => {
@@ -347,14 +359,55 @@ function renderPlans() {
       ...p.reasons.map((r) => `<li class="good">${esc(t(`r_${r}`))}</li>`),
       ...p.warnings.map((w) => `<li class="warn">${esc(t(`w_${w}`))}</li>`),
     ].join('');
+    const roles = (p.roles ?? []).flatMap((r) => r.roles.map((role) => `<li>${esc(t(`role_${role}`, { crop: cropName(r.crop) }))}</li>`));
     return `<article class="card plan">
       <header><h3>${esc(t('plan_n', { n: idx + 1 }))}</h3><span class="score">${esc(t('score', { n: p.total }))}</span></header>
       <ol class="steps">${steps}</ol>
       ${parts}
       ${p.irrigationMm > 0 ? `<p class="hint">${esc(t('irr_need', { n: p.irrigationMm }))}</p>` : ''}
+      ${p.grossPerAcre ? `<p class="hint">💰 ${esc(t('gross_income', { amount: inr(p.grossPerAcre) }))}</p>` : ''}
       <ul class="notes">${notes}</ul>
+      ${roles.length ? `<details class="roles"><summary>${esc(t('roles_title'))}</summary><ul>${roles.join('')}</ul></details>` : ''}
     </article>`;
   }).join('');
+  renderCompare(plans);
+}
+
+function renderCompare(plans) {
+  if (!plans[0]?.criteria) return;
+  const head = `<tr><th></th>${plans.map((_, i) => `<th>${esc(t('plan_n', { n: i + 1 }))}</th>`).join('')}</tr>`;
+  const rows = CRITERIA.map((k) => {
+    const vals = plans.map((p) => p.criteria[k]);
+    const best = Math.max(...vals);
+    return `<tr class="crit" tabindex="0" data-k="${k}">
+      <th scope="row">${esc(t(`crit_${k}`))}<small hidden>${esc(t(`crit_${k}_d`))}</small></th>
+      ${vals.map((v) => `<td class="${v === best ? 'best' : ''}"><span class="cell" style="--v:${v}%">${v}</span></td>`).join('')}
+    </tr>`;
+  }).join('');
+  $('#compare').innerHTML = `<table class="compare"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+  $('#compare').querySelectorAll('tr.crit').forEach((tr) => {
+    tr.onclick = () => {
+      const small = tr.querySelector('small');
+      small.hidden = !small.hidden;
+    };
+  });
+  $('#compare-card').hidden = false;
+}
+
+function fillAvoidList() {
+  const box = $('#avoid-list');
+  const checked = new Set([...box.querySelectorAll('input:checked')].map((i) => i.value));
+  box.innerHTML = (state.meta?.crops ?? [])
+    .filter((c) => c !== 'fallow_green_manure')
+    .map((c) => `<label><input type="checkbox" value="${c}" ${checked.has(c) ? 'checked' : ''}> ${esc(cropName(c))}</label>`)
+    .join('');
+}
+
+function updateScenarioLabels() {
+  const r = Number($('#sc-rain').value);
+  const tc = Number($('#sc-temp').value);
+  $('#sc-rain-label').textContent = t('sc_rain', { v: r > 0 ? `+${r}` : r });
+  $('#sc-temp-label').textContent = t('sc_temp', { v: tc > 0 ? `+${tc}` : tc });
 }
 
 // ---------- assistant ----------
@@ -488,6 +541,15 @@ async function init() {
   };
   $('#load').onclick = loadClimate;
   $('#make-plan').onclick = makePlan;
+  let scenarioTimer;
+  for (const id of ['#sc-rain', '#sc-temp']) {
+    $(id).oninput = () => {
+      updateScenarioLabels();
+      // Re-plan shortly after the farmer stops moving the slider, if a plan is showing.
+      clearTimeout(scenarioTimer);
+      if (state.plan) scenarioTimer = setTimeout(makePlan, 500);
+    };
+  }
   $('#ask-form').onsubmit = ask;
   setupMic();
 

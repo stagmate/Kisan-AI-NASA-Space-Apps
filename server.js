@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
 import { getClimatology } from './src/nasaPower.js';
 import { analyzeClimate } from './src/seasons.js';
-import { planRotations, IRRIGATION_MM, PRIORITIES } from './src/planner.js';
+import { planRotations, applyScenario, IRRIGATION_MM, PRIORITIES } from './src/planner.js';
 import { CROP_IDS } from './src/crops.js';
 import { askAssistant, LANGUAGES } from './src/assistant.js';
 import { getSoil, soilNotes } from './src/soil.js';
@@ -109,21 +109,38 @@ export function createApp({
 
   app.post('/api/plan', async (req, res) => {
     try {
-      const { lat, lon, irrigation = 'rainfed', lastCrop = null, priority = 'balanced' } = req.body ?? {};
+      const {
+        lat, lon, irrigation = 'rainfed', lastCrop = null, priority = 'balanced',
+        constraints = {}, scenario = {}, slopePct = 0,
+      } = req.body ?? {};
       if (!(irrigation in IRRIGATION_MM)) throw new RangeError('Unknown irrigation level');
       if (!PRIORITIES.includes(priority)) throw new RangeError('Unknown priority');
       if (lastCrop && !CROP_IDS.includes(lastCrop)) throw new RangeError('Unknown last crop');
-      // Soil is optional: plans still work from climate alone if SoilGrids is down.
-      const [climateRaw, soil] = await Promise.all([
+      const avoid = Array.isArray(constraints.avoid) ? constraints.avoid.filter((c) => CROP_IDS.includes(c)).slice(0, 20) : [];
+      const rainPct = Math.max(-50, Math.min(50, Number(scenario.rainPct) || 0));
+      const tempC = Math.max(-3, Math.min(5, Number(scenario.tempC) || 0));
+      const slope = Math.max(0, Math.min(60, Number(slopePct) || 0));
+      const quiet = (name) => (err) => {
+        console.error(`${name} failed:`, err.message);
+        return null;
+      };
+      // Soil and prices are optional: plans still work from climate alone.
+      const [climateRaw, soil, mandi] = await Promise.all([
         climateSource(lat, lon),
-        soilSource(lat, lon).catch((err) => {
-          console.error('soil failed:', err.message);
-          return null;
-        }),
+        soilSource(lat, lon).catch(quiet('soil')),
+        placeSource(lat, lon)
+          .then((place) => (place?.state ? mandiSource(place.state, place.district) : null))
+          .catch((err) => (err instanceof MandiNotConfigured ? null : quiet('mandi')(err))),
       ]);
       const climate = analyzeClimate(climateRaw);
-      const result = planRotations({ seasons: climate.seasons, irrigation, lastCrop, priority, soil });
-      res.json({ climate, soil, ...result });
+      const seasons = applyScenario(climate.seasons, { rainPct, tempC });
+      const result = planRotations({
+        seasons, irrigation, lastCrop, priority, soil, slopePct: slope,
+        constraints: { lowLabour: Boolean(constraints.lowLabour), needFodder: Boolean(constraints.needFodder), avoid },
+        prices: mandi?.crops ?? null,
+        rainPct,
+      });
+      res.json({ climate, soil, scenario: { rainPct, tempC, seasons: rainPct || tempC ? seasons : null }, pricesUsed: Boolean(mandi?.crops), ...result });
     } catch (err) {
       sendError(res, err);
     }
