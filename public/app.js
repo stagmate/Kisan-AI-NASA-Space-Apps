@@ -104,6 +104,7 @@ async function loadField(c) {
       const res = await api(`/api/field?lat=${c.lat}&lon=${c.lon}&parts=${parts}`);
       if (id !== fieldRequest) return; // a newer location was picked meanwhile
       const { errors, ...data } = res;
+      if (data.soil) delete state.field.soilMissing;
       Object.assign(state.field, data);
       Object.assign(state.field.errors, errors);
     } catch (err) {
@@ -176,8 +177,11 @@ function renderField() {
         <dt>${esc(t('soil_ph'))}</dt><dd>${so.ph ?? '–'}</dd>
         <dt>${esc(t('soil_carbon'))}</dt><dd>${so.organicCarbon ?? '–'} g/kg</dd>
       </dl>
-      ${so.nearby ? `<p class="hint">${esc(t('soil_nearby'))}</p>` : ''}
+      ${so.nearby ? `<p class="hint">${esc(t('soil_nearby', { km: so.distanceKm ?? '?' }))}</p>` : ''}
       <ul class="insights">${(f.soilNotes ?? []).map((nt) => `<li class="${nt.level}">${esc(t(`n_${nt.code}`, { value: nt.value }))}</li>`).join('')}</ul>`;
+    $('#soil-card').hidden = false;
+  } else if (f.soilMissing) {
+    $('#soil').innerHTML = `<p class="hint">${esc(t('soil_no_map'))}</p>`;
     $('#soil-card').hidden = false;
   }
 }

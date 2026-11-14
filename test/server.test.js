@@ -79,3 +79,17 @@ test('POST /api/plan includes soil and uses it', async () => {
   const body = await res.json();
   assert.equal(body.soil.ph, 6.8);
 });
+
+test('a point with no soil map is reported as soilMissing, not as an outage', async () => {
+  const app = createApp({
+    soilSource: async () => null,
+    forecastSource: async () => ({ days: [{ date: '2026-11-14', rainMm: 0, et0Mm: 4 }], soilMoisture: null }),
+    ndviSource: async () => ({ series: [] }),
+  });
+  const s = app.listen(0);
+  await new Promise((r) => s.once('listening', r));
+  const body = await (await fetch(`http://127.0.0.1:${s.address().port}/api/field?lat=12.96&lon=77.59`)).json();
+  assert.equal(body.soilMissing, 'no_map_here');
+  assert.equal(body.errors.soil, undefined);
+  s.close();
+});

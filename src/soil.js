@@ -104,8 +104,22 @@ export function soilNotes(soil) {
   return notes;
 }
 
-// SoilGrids masks built-up areas and water. If the exact point has no soil (e.g. a city-centre preset),
-// try points about 3 km and 7 km away and say so.
+// SoilGrids masks built-up areas and water. If the exact point has no soil (e.g. a GPS fix in town),
+// look outward — about 4, 15, 23 and 30 km — and report how far away the soil reading is.
+export const FALLBACK_OFFSETS = [
+  [0.03, 0.03],
+  [0.1, -0.1],
+  [-0.15, -0.15],
+  [0.2, 0.2],
+];
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad * Math.cos(((lat1 + lat2) / 2) * rad);
+  return 6371 * Math.sqrt(dLat * dLat + dLon * dLon);
+}
+
 export async function getSoil(lat, lon, opts = {}) {
   const la = roundCoord(lat);
   const lo = roundCoord(lon);
@@ -113,9 +127,11 @@ export async function getSoil(lat, lon, opts = {}) {
     const at = async (a, b) => parseSoil(await fetchJson('SoilGrids', buildUrl(a, b), { timeoutMs: 20_000, ...opts }));
     const here = await at(la, lo);
     if (here) return here;
-    for (const [dLa, dLo] of [[0.02, 0.02], [-0.05, -0.05]]) {
-      const near = await at(roundCoord(la + dLa), roundCoord(lo + dLo));
-      if (near) return { ...near, nearby: true };
+    for (const [dLa, dLo] of FALLBACK_OFFSETS) {
+      const nla = roundCoord(la + dLa);
+      const nlo = roundCoord(lo + dLo);
+      const near = await at(nla, nlo);
+      if (near) return { ...near, nearby: true, distanceKm: Math.round(distanceKm(la, lo, nla, nlo)) };
     }
     return null;
   });

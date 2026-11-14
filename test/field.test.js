@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { parseSoil, textureClass, soilNotes, buildUrl as soilUrl } from '../src/soil.js';
+import { parseSoil, textureClass, soilNotes, buildUrl as soilUrl, getSoil } from '../src/soil.js';
 import { parseForecast, wateringAdvice } from '../src/forecast.js';
 import { buildSeries, summarizeNdvi, tilePixel, storagePath } from '../src/ndvi.js';
 import { fetchJson, SourceError } from '../src/http.js';
@@ -83,4 +83,18 @@ test('fetchJson reports rate limits and timeouts as source errors', async () => 
   await assert.rejects(fetchJson('Open-Meteo', 'x', { fetchImpl: limited }), (e) => e instanceof SourceError && /limit/.test(e.message));
   const slow = async () => { const e = new Error('t'); e.name = 'TimeoutError'; throw e; };
   await assert.rejects(fetchJson('MODIS', 'x', { fetchImpl: slow }), /timed out/);
+});
+
+test('soil falls back to the nearest mapped point and says how far it is', async () => {
+  const fixture = load('./fixture-soilgrids-bengaluru.json');
+  const empty = { properties: { layers: [] } };
+  let calls = 0;
+  const fetchImpl = async () => {
+    calls++;
+    return { ok: true, status: 200, json: async () => (calls < 3 ? empty : fixture) };
+  };
+  const s = await getSoil(10.01, 70.01, { fetchImpl });
+  assert.equal(calls, 3);
+  assert.equal(s.nearby, true);
+  assert.ok(s.distanceKm >= 10 && s.distanceKm <= 20);
 });

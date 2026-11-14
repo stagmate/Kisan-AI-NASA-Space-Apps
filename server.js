@@ -67,7 +67,11 @@ export function createApp({
       take('soil', soilR);
       take('forecast', forecastR);
       take('ndvi', ndviR);
-      if (want.has('soil') && soilR.status === 'fulfilled' && soilR.value === null) out.errors.soil = 'SoilGrids: no soil data here';
+      // No soil map anywhere near the point (inside a big town or on water): not an outage.
+      if (want.has('soil') && soilR.status === 'fulfilled' && soilR.value === null) {
+        delete out.soil;
+        out.soilMissing = 'no_map_here';
+      }
       if (out.soil) out.soilNotes = soilNotes(out.soil);
       if (out.forecast) out.advice = wateringAdvice(out.forecast, out.soil?.texture);
       res.json(out);
