@@ -1,0 +1,114 @@
+:root {
+  --bg: #f6f4ec;
+  --card: #ffffff;
+  --text: #1f2a1f;
+  --muted: #5c6b5c;
+  --line: #dfe5d8;
+  --accent: #2f6b2f;
+  --accent-ink: #ffffff;
+  --rain: #3b82c4;
+  --temp: #d9822b;
+  --good: #2f7d32;
+  --warn: #b45309;
+  --kharif: #e7f3e3;
+  --rabi: #e6eef8;
+  --zaid: #fbefe0;
+  font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans Devanagari", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121612; --card: #1b211b; --text: #e8eee6; --muted: #a3b0a1; --line: #2e382d;
+    --accent: #6fbf6a; --accent-ink: #0d140d; --rain: #6aa9e0; --temp: #f0a35a;
+    --good: #7ccf7f; --warn: #f0b35a; --kharif: #1f2d1d; --rabi: #1c2633; --zaid: #33291b;
+  }
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.45; font-size: 17px; }
+main { max-width: 760px; margin: 0 auto; padding: 0 16px 32px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--accent); color: var(--accent-ink); }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { font-size: 30px; }
+.top h1 { margin: 0; font-size: 1.3rem; }
+.tagline { margin: 0; font-size: .85rem; opacity: .9; }
+.top select { background: var(--card); color: var(--text); width: auto; min-width: 7.5em; padding: 8px 6px; }
+
+.tabs { position: sticky; top: 0; z-index: 2; display: flex; background: var(--card); border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; border-radius: 0; background: none; color: var(--muted); padding: 14px 8px; font-weight: 600; border-bottom: 3px solid transparent; }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-top: 16px; }
+h2 { margin: 0 0 10px; font-size: 1.1rem; }
+h3 { margin: 14px 0 8px; font-size: 1rem; }
+
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; color: var(--muted); }
+label.grow { flex: 1 1 200px; }
+input, select, textarea, button { font: inherit; }
+input, select, textarea { padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--text); min-width: 0; }
+input[type=number] { width: 8.5em; }
+textarea { width: 100%; resize: vertical; }
+button { padding: 10px 16px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: pointer; min-height: 44px; }
+button.secondary { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+button:disabled { opacity: .5; cursor: wait; }
+
+.status { margin: 0; min-height: 1.2em; color: var(--muted); }
+.status.error { color: var(--warn); }
+
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .bar { fill: var(--rain); opacity: .8; }
+.chart .line { fill: none; stroke: var(--temp); stroke-width: 2.5; }
+.chart .dot { fill: var(--temp); }
+.chart .axis { font-size: 9px; fill: var(--muted); }
+.legend { font-size: .85rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.key { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-left: 8px; }
+.key.rain { background: var(--rain); }
+.key.temp { background: var(--temp); }
+
+.seasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 12px; }
+.season { border-radius: 12px; padding: 10px 12px; }
+.season h3 { margin: 0 0 6px; }
+.season.kharif, .step.kharif { background: var(--kharif); }
+.season.rabi, .step.rabi { background: var(--rabi); }
+.season.zaid, .step.zaid { background: var(--zaid); }
+dl { display: grid; grid-template-columns: 1fr auto; margin: 0; gap: 2px 8px; font-size: .9rem; }
+dt { color: var(--muted); }
+dd { margin: 0; font-weight: 600; text-align: right; }
+
+.insights, .notes { padding-left: 0; list-style: none; margin: 0; }
+.insights li, .notes li { padding: 6px 0 6px 26px; position: relative; }
+.insights li::before, .notes li::before { position: absolute; left: 2px; }
+li.info::before { content: "ℹ️"; }
+li.good::before { content: "✅"; }
+li.warn::before { content: "⚠️"; }
+.source, .hint { font-size: .8rem; color: var(--muted); }
+
+.priorities { border: 0; padding: 0; margin: 4px 0 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.priorities legend { font-size: .9rem; color: var(--muted); margin-bottom: 6px; }
+.priorities label { flex-direction: row; align-items: center; color: var(--text); }
+
+.plan header { display: flex; justify-content: space-between; align-items: baseline; }
+.plan h3 { margin: 0; }
+.score { font-weight: 700; color: var(--accent); }
+.steps { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 8px; }
+.step { border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.season-tag { font-size: .8rem; color: var(--muted); min-width: 9em; }
+.pill { font-size: .75rem; padding: 2px 8px; border-radius: 99px; border: 1px solid currentColor; }
+.pill.warn { color: var(--warn); }
+.meter { display: grid; grid-template-columns: 8.5em 1fr 2.2em; align-items: center; gap: 8px; font-size: .85rem; margin: 4px 0; }
+.track { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.fill { height: 100%; background: var(--accent); }
+.meter b { text-align: right; }
+
+.chat { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.msg { padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; max-width: 92%; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); }
+.msg.assistant { align-self: flex-start; background: var(--kharif); }
+.msg.pending { align-self: flex-start; color: var(--muted); font-style: italic; }
+.msg.error { align-self: flex-start; color: var(--warn); }
+.speak { margin-top: 6px; padding: 4px 10px; min-height: 0; font-size: .8rem; background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.ask-form { margin-top: 10px; }
+#mic.live { background: var(--warn); color: #fff; border-color: var(--warn); }
+
+.foot { text-align: center; font-size: .8rem; color: var(--muted); padding: 16px; }
