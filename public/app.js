@@ -139,17 +139,24 @@ function renderField() {
     const detail = a.available == null
       ? t('adv_detail_nosoil', { rain: a.rain7, et: a.et7 })
       : t('adv_detail', { pct: a.available, rain: a.rain7, et: a.et7 });
-    const maxRain = Math.max(10, ...f.forecast.days.map((d) => d.rainMm));
-    const days = f.forecast.days.map((d) => {
-      const dt = new Date(`${d.date}T12:00:00`);
-      const label = dt.toLocaleDateString(LOCALES[getLang()] ?? 'en-IN', { weekday: 'short' });
-      const h = Math.round((d.rainMm / maxRain) * 48);
-      return `<div class="day"><span class="dname">${esc(label)}</span>
-        <span class="rainbar" style="height:${h}px" title="${d.rainMm} mm"></span>
-        <span class="rmm">${Math.round(d.rainMm)}</span>
-        <span class="tt">${Math.round(d.tMax)}° / ${Math.round(d.tMin)}°</span></div>`;
-    }).join('');
-    $('#week').innerHTML = `<p class="advice ${a.code}">${esc(head)}</p><p class="hint">${esc(detail)}</p><div class="days">${days}</div>`;
+    const fd = f.forecast.days;
+    const loc = LOCALES[getLang()] ?? 'en-IN';
+    const cells = (fn) => fd.map((d) => `<span>${fn(d)}</span>`).join('');
+    const names = cells((d) => esc(new Date(`${d.date}T12:00:00`).toLocaleDateString(loc, { weekday: 'short' })));
+    const dryWeek = fd.every((d) => d.rainMm < 0.5);
+    const maxRain = Math.max(10, ...fd.map((d) => d.rainMm));
+    const rainRow = dryWeek
+      ? `<p class="dry">☀️ ${esc(t('week_dry'))}</p>`
+      : `<div class="wgrid bars">${cells((d) => (d.rainMm >= 0.5 ? `<i class="rainbar" style="height:${Math.max(3, Math.round((d.rainMm / maxRain) * 40))}px"></i>` : ''))}</div>
+         <div class="wgrid vals">${cells((d) => `<b>${d.rainMm >= 0.5 ? Math.round(d.rainMm) : '–'}</b>${d.rainChance >= 10 ? `<small>${d.rainChance}%</small>` : ''}`)}</div>`;
+    const days = `
+      <div class="wgrid names">${names}</div>
+      <h4>${esc(t('week_rain'))}</h4>${rainRow}
+      <h4>${esc(t('week_use'))}</h4>
+      <div class="wgrid vals">${cells((d) => (d.et0Mm == null ? '–' : d.et0Mm.toFixed(1)))}</div>
+      <h4>${esc(t('week_temp'))}</h4>
+      <div class="wgrid vals temps">${cells((d) => `${Math.round(d.tMax)}°<br><small>${Math.round(d.tMin)}°</small>`)}</div>`;
+    $('#week').innerHTML = `<p class="advice ${a.code}">${esc(head)}</p><p class="hint">${esc(detail)}</p><div class="week-table">${days}</div>`;
     $('#week-card').hidden = false;
   }
 

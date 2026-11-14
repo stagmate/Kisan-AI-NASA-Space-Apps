@@ -120,12 +120,18 @@ li.warn::before { content: "⚠️"; }
 .advice.rain_coming { color: var(--rain); }
 .advice.no_need, .advice.ndvi-dense, .advice.ndvi-moderate { color: var(--good); }
 .advice.ndvi-bare, .advice.ndvi-sparse { color: var(--warn); }
-.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; margin-top: 10px; text-align: center; font-size: .75rem; }
-.day { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
-.dname { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.rainbar { width: 60%; min-height: 2px; background: var(--rain); border-radius: 3px 3px 0 0; margin-top: auto; }
-.rmm { font-weight: 600; }
-.tt { color: var(--muted); font-size: .7rem; white-space: nowrap; }
+.week-table { margin-top: 10px; }
+.week-table h4 { margin: 12px 0 4px; font-size: .8rem; font-weight: 600; color: var(--muted); }
+.wgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: .85rem; }
+.wgrid span { min-width: 0; }
+.wgrid.names { font-size: .75rem; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.wgrid.names span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wgrid.bars { align-items: end; height: 44px; }
+.wgrid.bars span { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
+.rainbar { display: block; width: 60%; min-height: 2px; background: var(--rain); border-radius: 3px 3px 0 0; }
+.wgrid.vals small { display: block; color: var(--rain); font-size: .7rem; }
+.wgrid.temps small { color: var(--muted); }
+.dry { margin: 0; font-size: .9rem; }
 .spark { width: 100%; height: auto; display: block; margin-top: 8px; }
 .spark .ndvi-line { fill: none; stroke: var(--good); stroke-width: 2.5; }
 .spark .ndvi-dot { fill: var(--good); }
