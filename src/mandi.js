@@ -94,13 +94,24 @@ export function summarizePrices(records, district = null) {
     if (!modal) continue;
     (byCrop[crop] ??= []).push({
       modal,
-      market: r.market,
+      market: r.market?.trim(),
+      raw: r.commodity,
       district: r.district,
       date: isoDate(r.arrival_date),
     });
   }
   const crops = {};
-  for (const [crop, rows] of Object.entries(byCrop)) {
+  for (const [crop, allRows] of Object.entries(byCrop)) {
+    let rows = allRows;
+    // Farmers sell paddy, not milled rice (which costs about twice as much); use paddy when reported.
+    if (crop === 'rice') {
+      const paddy = rows.filter((r) => /^paddy/i.test(r.raw ?? ''));
+      if (paddy.length) rows = paddy;
+    }
+    // Drop obvious data-entry errors (e.g. ₹8/quintal) before taking the median and range.
+    const mid = median(rows.map((r) => r.modal));
+    const clean = rows.filter((r) => r.modal >= mid / 4 && r.modal <= mid * 4);
+    if (clean.length) rows = clean;
     const modals = rows.map((r) => r.modal);
     const local = want ? rows.filter((r) => r.district?.toLowerCase().startsWith(want)) : [];
     const dates = rows.map((r) => r.date).filter(Boolean).sort();

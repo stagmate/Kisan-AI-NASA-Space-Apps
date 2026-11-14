@@ -1,3 +1,4 @@
+import { renderAnswer, plainAnswer } from './format.js';
 import { UI_LANGS, setLang, getLang, t, monthName, cropName, insightText } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -382,7 +383,8 @@ const SPEECH_LOCALES = { en: 'en-IN', hi: 'hi-IN', mr: 'mr-IN', bn: 'bn-IN', ta:
 function addMessage(role, text) {
   const div = document.createElement('div');
   div.className = `msg ${role}`;
-  div.textContent = text;
+  if (role === 'assistant') div.innerHTML = renderAnswer(text);
+  else div.textContent = text;
   if (role === 'assistant' && 'speechSynthesis' in window) {
     const b = document.createElement('button');
     b.type = 'button';
@@ -390,11 +392,11 @@ function addMessage(role, text) {
     b.textContent = `🔊 ${t('speak')}`;
     b.onclick = () => {
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
+      const u = new SpeechSynthesisUtterance(plainAnswer(text));
       u.lang = SPEECH_LOCALES[$('#ask-lang').value] ?? 'en-IN';
       speechSynthesis.speak(u);
     };
-    div.append(document.createElement('br'), b);
+    div.append(b);
   }
   $('#chat').append(div);
   div.scrollIntoView({ block: 'nearest' });

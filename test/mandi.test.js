@@ -73,3 +73,19 @@ test('mandi needs a key; pages through rows and falls back to the older filter n
   assert.match(urls[0], /filters\[state\.keyword\]=Goa/);
   assert.equal(out.crops.onion.local.markets, 1);
 });
+
+test('paddy preferred over milled rice; outliers ignored', () => {
+  const s = summarizePrices([
+    row('Paddy(Dhan)(Common)', 'Mandya', 'Mandya', 2300),
+    row('Paddy(Dhan)(Basmati)', 'Mandya', 'Mandya', 2500),
+    row('Rice', 'Bangalore', 'Binny Mill', 5200),
+    row('Onion', 'Nagpur', 'APMC Kamthi ', 3600),
+    row('Onion', 'Nagpur', 'APMC Savner', 3800),
+    row('Onion', 'Nagpur', 'APMC Katol', 8),
+  ], 'Nagpur');
+  assert.equal(s.crops.rice.modal, 2400);
+  assert.equal(s.crops.rice.high, 2500);
+  assert.equal(s.crops.onion.low, 3600);
+  assert.equal(s.crops.onion.markets, 2);
+  assert.equal(s.crops.onion.local.example, 'APMC Kamthi');
+});

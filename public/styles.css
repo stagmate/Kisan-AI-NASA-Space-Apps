@@ -103,6 +103,10 @@ li.warn::before { content: "⚠️"; }
 
 .chat { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .msg { padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; max-width: 92%; }
+.msg.assistant { white-space: normal; }
+.msg.assistant p { margin: 0 0 8px; }
+.msg.assistant ul { margin: 0 0 8px; padding-left: 20px; }
+.msg.assistant li { margin: 2px 0; }
 .msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); }
 .msg.assistant { align-self: flex-start; background: var(--kharif); }
 .msg.pending { align-self: flex-start; color: var(--muted); font-style: italic; }
