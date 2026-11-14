@@ -6,7 +6,7 @@
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 export const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-const PARAMETERS = ['T2M', 'T2M_RANGE', 'T2M_MAX', 'T2M_MIN', 'PRECTOTCORR', 'RH2M', 'ALLSKY_SFC_SW_DWN'];
+const PARAMETERS = ['T2M', 'T2M_RANGE', 'T2M_MAX', 'T2M_MIN', 'PRECTOTCORR', 'RH2M', 'ALLSKY_SFC_SW_DWN', 'GWETROOT', 'EVPTRNS'];
 const BASE_URL = 'https://power.larc.nasa.gov/api/temporal/climatology/point';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -60,6 +60,9 @@ export function parseClimatology(json) {
       rainMm: rainPerDay == null ? null : Math.round(rainPerDay * DAYS_IN_MONTH[i] * 10) / 10,
       humidity: clean(p.RH2M?.[m]),
       solar: clean(p.ALLSKY_SFC_SW_DWN?.[m]),
+      // Root-zone soil wetness (0 = dry, 1 = saturated) and actual evapotranspiration (mm/day), MERRA-2.
+      soilWet: clean(p.GWETROOT?.[m]),
+      etMmDay: clean(p.EVPTRNS?.[m]),
     };
   });
   if (months.some((m) => m.tempMean == null || m.rainMm == null)) {
@@ -84,4 +87,47 @@ export async function getClimatology(latIn, lonIn, { fetchImpl = fetch, now = Da
 
 export function clearCache() {
   cache.clear();
+}
+
+const DAILY_URL = 'https://power.larc.nasa.gov/api/temporal/daily/point';
+const DAILY_PARAMETERS = ['PRECTOTCORR', 'T2M_MAX', 'T2M_MIN', 'GWETROOT', 'EVPTRNS'];
+const dailyCache = new Map();
+
+const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+
+/** Parse a POWER daily response into [{ date, rainMm, tMax, tMin, soilWet, etMm }], dropping days not yet published. */
+export function parseDaily(json) {
+  const p = json?.properties?.parameter;
+  if (!p?.PRECTOTCORR) throw new Error('NASA POWER daily response has no rainfall');
+  return Object.keys(p.PRECTOTCORR)
+    .map((k) => ({
+      date: `${k.slice(0, 4)}-${k.slice(4, 6)}-${k.slice(6, 8)}`,
+      rainMm: clean(p.PRECTOTCORR[k]),
+      tMax: clean(p.T2M_MAX?.[k]),
+      tMin: clean(p.T2M_MIN?.[k]),
+      soilWet: clean(p.GWETROOT?.[k]),
+      etMm: clean(p.EVPTRNS?.[k]),
+    }))
+    .filter((d) => d.rainMm != null && d.tMax != null);
+}
+
+/** Daily NASA POWER data for the last `days` days (the newest ~3 days are not published yet). */
+export async function getDaily(latIn, lonIn, { days = 245, now = new Date(), fetchImpl = fetch } = {}) {
+  const { lat, lon } = validateCoords(latIn, lonIn);
+  const key = `${lat},${lon},${ymd(now)}`;
+  if (dailyCache.has(key)) return dailyCache.get(key);
+  const qs = new URLSearchParams({
+    parameters: DAILY_PARAMETERS.join(','),
+    community: 'AG',
+    latitude: String(lat),
+    longitude: String(lon),
+    start: ymd(new Date(now.getTime() - days * 864e5)),
+    end: ymd(now),
+    format: 'JSON',
+  });
+  const res = await fetchImpl(`${DAILY_URL}?${qs}`, { signal: AbortSignal.timeout(30_000) });
+  if (!res.ok) throw new Error(`NASA POWER daily request failed (HTTP ${res.status})`);
+  const data = parseDaily(await res.json());
+  dailyCache.set(key, data);
+  return data;
 }

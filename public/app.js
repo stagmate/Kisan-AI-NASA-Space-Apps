@@ -46,6 +46,7 @@ function applyText() {
   if (state.plan) renderPlans();
   if (state.field) renderField();
   if (state.mandi) renderMandi();
+  if (state.timeline) renderTimeline();
 }
 
 function fillCropSelect() {
@@ -117,8 +118,78 @@ async function loadField(c) {
     }
     renderField();
   };
+  loadTimeline(c, id);
   await Promise.all([part('soil,forecast'), part('ndvi')]);
   if (id === fieldRequest) renderField();
+}
+
+// ---------- season timeline & stress check ----------
+async function loadTimeline(c, id) {
+  state.timeline = null;
+  $('#timeline-card').hidden = false;
+  $('#timeline').innerHTML = `<p class="hint">${esc(t('tl_loading'))}</p>`;
+  try {
+    const tl = await api(`/api/timeline?lat=${c.lat}&lon=${c.lon}`);
+    if (id !== fieldRequest) return;
+    state.timeline = tl;
+    renderTimeline();
+  } catch (err) {
+    if (id === fieldRequest) $('#timeline').innerHTML = `<p class="hint">${esc(t('src_unavailable', { name: 'NASA POWER / MODIS' }))}</p>`;
+  }
+}
+
+const shortDate = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(LOCALES[getLang()] ?? 'en-IN', { day: 'numeric', month: 'short' });
+const signed = (n) => (n > 0 ? `+${n}` : `${n}`);
+
+function renderTimeline() {
+  const tl = state.timeline;
+  if (!tl) return;
+  // Phase strip: each segment's width is its share of the time covered.
+  const segs = tl.segments ?? [];
+  let strip = '';
+  if (segs.length) {
+    const t0 = Date.parse(segs[0].from);
+    const t1 = Date.parse(segs.at(-1).to) + 8 * 864e5;
+    strip = `<div class="phase-strip">${segs.map((sg, i) => {
+      const end = i < segs.length - 1 ? Date.parse(segs[i + 1].from) : t1;
+      const w = Math.max(4, ((end - Date.parse(sg.from)) / (t1 - t0)) * 100);
+      return `<span class="ph ph-${sg.phase}" style="flex:${w}" title="${esc(t(`ph_${sg.phase}`))}: ${shortDate(sg.from)}–${shortDate(sg.to)}">${w > 14 ? esc(t(`ph_${sg.phase}`)) : ''}</span>`;
+    }).join('')}</div>
+    <div class="phase-axis"><span>${esc(shortDate(segs[0].from))}</span><span>${esc(shortDate(segs.at(-1).to))}</span></div>
+    <div class="phase-legend">${['bare', 'greenup', 'peak', 'decline', 'steady'].map((ph) => `<span><i class="ph-${ph}"></i>${esc(t(`ph_${ph}`))}</span>`).join('')}</div>`;
+  }
+  const lines = [];
+  if (tl.anomaly) {
+    lines.push(`<li class="${tl.anomaly.status === 'below' ? 'warn' : 'info'}">${esc(t('an_now', { latest: tl.anomaly.latest.toFixed(2), normal: tl.anomaly.normal.toFixed(2), years: tl.anomaly.years, status: t(`an_${tl.anomaly.status}`) }))}</li>`);
+  }
+  if (tl.soilNow) {
+    const st = tl.soilNow.diff <= -0.05 ? 'drier' : tl.soilNow.diff >= 0.05 ? 'wetter' : 'normal';
+    lines.push(`<li class="${st === 'drier' ? 'warn' : 'info'}">${esc(t('sm_now', { wet: tl.soilNow.wet.toFixed(2), normal: tl.soilNow.normal.toFixed(2), status: t(`sm_${st}`) }))}</li>`);
+  }
+  const findings = (tl.findings ?? []).filter((f) => f.code !== 'below_normal_now').map((f) => {
+    const level = /stress|unexplained/.test(f.code) ? 'warn' : f.code === 'greenup' ? 'good' : 'info';
+    const causes = (f.causes ?? []).map((c) => t(`cause_${c}`)).join(', ');
+    return `<li class="${level}">${esc(t(`f_${f.code}`, { from: shortDate(f.from), to: shortDate(f.to), start: f.start?.toFixed(2), end: f.end?.toFixed(2), causes, drop: f.drop?.toFixed(2) }))}</li>`;
+  });
+  const conf = tl.confidence;
+  const confHtml = `<details class="confidence conf-${conf.level}"><summary>${esc(t('conf_title', { level: t(`conf_${conf.level}`) }))}</summary>
+    <ul>${conf.reasons.map((r) => `<li>${esc(t(`cr_${r}`))}</li>`).join('')}</ul></details>`;
+  const rows = (tl.monthly ?? []).map((m) => `<tr>
+      <th>${esc(monthName(m.label))}${m.partial ? '*' : ''}</th>
+      <td>${m.rainMm}${m.rainAnomalyPct != null ? `<small>${signed(m.rainAnomalyPct)}%</small>` : ''}</td>
+      <td>${m.etMm}</td>
+      <td class="${m.waterBalanceMm < 0 ? 'neg' : ''}">${signed(m.waterBalanceMm)}</td>
+      <td>${m.soilWet ?? '–'}${m.soilWetAnomaly != null ? `<small class="${m.soilWetAnomaly <= -0.05 ? 'neg' : ''}">${signed(m.soilWetAnomaly)}</small>` : ''}</td>
+      <td>${m.heatDays || ''}</td>
+      <td>${m.ndvi ?? '–'}</td>
+    </tr>`).join('');
+  const table = `<details class="datatable"><summary>${esc(t('tbl_title'))}</summary>
+    <div class="table-scroll"><table class="monthly"><thead><tr>
+      <th>${esc(t('tbl_month'))}</th><th>${esc(t('tbl_rain'))}</th><th>${esc(t('tbl_et'))}</th><th>${esc(t('tbl_wb'))}</th>
+      <th>${esc(t('tbl_soil'))}</th><th>${esc(t('tbl_heat'))}</th><th>${esc(t('tbl_ndvi'))}</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="source">${esc(t('tbl_note'))}</p></details>`;
+  $('#timeline').innerHTML = `${strip}<ul class="insights">${lines.join('')}${findings.join('')}</ul>${confHtml}${table}`;
+  $('#timeline-card').hidden = false;
 }
 
 const SOURCE_NAMES = { forecast: 'Open-Meteo', soil: 'SoilGrids', ndvi: 'NASA MODIS' };
@@ -427,6 +498,12 @@ function fieldContext() {
     mandi: state.mandi?.crops ? { state: state.mandi.state, crops: state.mandi.crops } : undefined,
     soilMoisture: state.field?.forecast?.soilMoisture,
     advice: state.field?.advice,
+    timeline: state.timeline ? {
+      findings: state.timeline.findings,
+      anomaly: state.timeline.anomaly,
+      soilNow: state.timeline.soilNow,
+      confidence: state.timeline.confidence.level,
+    } : undefined,
     ndvi: state.field?.ndvi ? { latest: state.field.ndvi.latest, status: state.field.ndvi.status, trend: state.field.ndvi.trend } : undefined,
   };
 }

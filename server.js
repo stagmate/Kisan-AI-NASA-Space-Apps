@@ -9,8 +9,9 @@ import { CROP_IDS } from './src/crops.js';
 import { askAssistant, LANGUAGES } from './src/assistant.js';
 import { getSoil, soilNotes } from './src/soil.js';
 import { getForecast, wateringAdvice } from './src/forecast.js';
-import { getNdvi } from './src/ndvi.js';
-import { validateCoords } from './src/nasaPower.js';
+import { getNdvi, getNdviNormal } from './src/ndvi.js';
+import { validateCoords, getDaily } from './src/nasaPower.js';
+import { analyzeTimeline } from './src/timeline.js';
 import { getPlace } from './src/geo.js';
 import { getMandiPrices, MandiNotConfigured } from './src/mandi.js';
 
@@ -24,6 +25,8 @@ export function createApp({
   forecastSource = getForecast,
   ndviSource = getNdvi,
   placeSource = getPlace,
+  dailySource = getDaily,
+  ndviNormalSource = getNdviNormal,
   mandiSource = getMandiPrices,
   ask = askAssistant,
   assistantReady = hasClaudeKey,
@@ -103,6 +106,24 @@ export function createApp({
       if (err instanceof MandiNotConfigured) {
         return res.status(503).json({ error: 'Mandi prices are not configured (DATA_GOV_IN_API_KEY).', code: 'not_configured' });
       }
+      sendError(res, err);
+    }
+  });
+
+  // Season timeline and stress check: NASA POWER daily + normals and MODIS NDVI on one monthly grid.
+  app.get('/api/timeline', async (req, res) => {
+    try {
+      const { lat, lon } = validateCoords(req.query.lat, req.query.lon);
+      const [climate, daily, ndvi] = await Promise.all([climateSource(lat, lon), dailySource(lat, lon), ndviSource(lat, lon)]);
+      const latest = ndvi?.series?.at(-1)?.date;
+      const normal = latest
+        ? await ndviNormalSource(lat, lon, latest).catch((err) => {
+            console.error('ndvi normal failed:', err.message);
+            return null;
+          })
+        : null;
+      res.json(analyzeTimeline({ daily, climatologyMonths: climate.months, ndvi, normal }));
+    } catch (err) {
       sendError(res, err);
     }
   });

@@ -27,6 +27,7 @@ How to answer:
 - Base climate statements on the NASA POWER data in the field context. If the data does not cover the question, say so instead of guessing.
 - For pesticides or chemicals, prefer integrated pest management, give safety precautions, and suggest checking with the local Krishi Vigyan Kendra (KVK) or agriculture officer for doses.
 - Never invent prices, government schemes or subsidy amounts. Use only the mandi prices in the field context, say they are today's reported prices, and suggest checking the local mandi before selling.
+- Satellite and model data are coarse (250 m pixels, ~50 km weather cells). When you use them, say how sure the data is and ask the farmer to confirm what they see in the field. Local knowledge, the KVK and the agriculture officer are the final judges.
 - Keep answers under about 180 words unless the farmer asks for more detail.`;
 
 let client = null;
@@ -55,6 +56,13 @@ export function formatContext(ctx) {
       .slice(0, 12)
       .map(([crop, v]) => `${crop} ₹${v.modal}/quintal (${v.markets} reports${v.date ? `, ${v.date}` : ''})`);
     if (prices.length) lines.push(`Today's mandi modal prices in ${ctx.mandi.state} (data.gov.in): ${prices.join('; ')}`);
+  }
+  if (ctx.timeline) {
+    const tl = ctx.timeline;
+    const f = (tl.findings ?? []).slice(-6).map((x) => `${x.code} ${x.from}..${x.to}${x.causes?.length ? ` (with ${x.causes.join(', ')})` : ''}${x.drop != null ? ` drop ${x.drop}` : ''}`);
+    if (f.length) lines.push(`Season timeline from MODIS NDVI + NASA POWER (rule-based, confidence ${tl.confidence}): ${f.join('; ')}`);
+    if (tl.anomaly) lines.push(`Latest NDVI ${tl.anomaly.latest} vs normal ${tl.anomaly.normal} for this time of year (${tl.anomaly.status})`);
+    if (tl.soilNow) lines.push(`NASA POWER root-zone soil wetness this month ${tl.soilNow.wet} vs normal ${tl.soilNow.normal}`);
   }
   if (ctx.irrigation) lines.push(`Irrigation available: ${ctx.irrigation}`);
   if (ctx.lastCrop) lines.push(`Last crop: ${ctx.lastCrop}`);

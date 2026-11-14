@@ -175,3 +175,29 @@ table.compare { width: 100%; border-collapse: collapse; font-size: .85rem; }
 .compare .cell { display: inline-block; min-width: 2.4em; padding: 2px 4px; border-radius: 6px; background: linear-gradient(90deg, var(--kharif) var(--v), transparent var(--v)); }
 .compare td.best .cell { font-weight: 700; color: var(--good); outline: 1.5px solid var(--good); }
 .judgment { font-size: .85rem; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--temp); border-radius: 10px; padding: 10px 12px; margin-top: 16px; }
+
+/* season timeline */
+.phase-strip { display: flex; height: 26px; border-radius: 8px; overflow: hidden; margin: 6px 0 2px; }
+.ph { display: flex; align-items: center; justify-content: center; font-size: .65rem; color: #1f2a1f; white-space: nowrap; overflow: hidden; min-width: 0; }
+.ph-bare { background: #c9b28a; }
+.ph-greenup { background: #9fd38a; }
+.ph-peak { background: #3f9a3f; color: #fff; }
+.ph-decline { background: #e0b04a; }
+.ph-steady { background: #cfd8c6; }
+.phase-axis { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); }
+.phase-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .72rem; color: var(--muted); margin: 6px 0 4px; }
+.phase-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.confidence { margin: 8px 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); }
+.confidence summary { cursor: pointer; font-weight: 600; }
+.conf-high summary { color: var(--good); }
+.conf-medium summary { color: var(--temp); }
+.conf-low summary { color: var(--warn); }
+.confidence ul { margin: 6px 0 0; padding-left: 18px; font-size: .85rem; color: var(--muted); }
+.datatable summary { cursor: pointer; color: var(--accent); font-size: .9rem; margin: 6px 0; }
+.table-scroll { overflow-x: auto; }
+table.monthly { border-collapse: collapse; font-size: .78rem; width: 100%; min-width: 480px; }
+.monthly th, .monthly td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.monthly th:first-child { text-align: left; }
+.monthly thead th { font-weight: 600; color: var(--muted); white-space: normal; vertical-align: bottom; }
+.monthly small { display: block; font-size: .68rem; color: var(--muted); }
+.monthly .neg { color: var(--warn); }

@@ -146,4 +146,48 @@ export async function getNdvi(lat, lon, { months = 8, now = new Date(), fetchImp
   });
 }
 
+/**
+ * "Normal" greenness for the latest image's time of year: the same ±12-day window in each of the
+ * previous `years` years, clear pixels only. Returns { normal, values: [{ date, ndvi }] }.
+ */
+export async function getNdviNormal(lat, lon, isoDate, { years = 3, fetchImpl = fetch } = {}) {
+  const la = roundCoord(lat);
+  const lo = roundCoord(lon);
+  return normalCache(`${la},${lo},${isoDate}`, async () => {
+    const px = tilePixel(la, lo);
+    const tileId = `h${String(px.h).padStart(2, '0')}v${String(px.v).padStart(2, '0')}`;
+    const base = new Date(`${isoDate}T00:00:00Z`);
+    const windows = Array.from({ length: years }, (_, i) => {
+      const d = new Date(base);
+      d.setUTCFullYear(base.getUTCFullYear() - (i + 1));
+      return [new Date(d.getTime() - 12 * 864e5).toISOString(), new Date(d.getTime() + 12 * 864e5).toISOString()];
+    });
+    const searches = await Promise.all(windows.map(([from, to]) => fetchJson('MODIS', STAC_SEARCH, {
+      fetchImpl,
+      timeoutMs: 20_000,
+      method: 'POST',
+      body: JSON.stringify({ collections: ['modis-13Q1-061'], intersects: { type: 'Point', coordinates: [lo, la] }, datetime: `${from}/${to}`, limit: 10 }),
+    })));
+    const items = searches.flatMap((s) => (s.features ?? []).filter((f) => f.assets?.[NDVI_ASSET] && f.id.includes(`.${tileId}.`)));
+    if (!items.length) return { normal: null, values: [] };
+    const path = storagePath(items[0].assets[NDVI_ASSET].href);
+    const { token } = await tokenCache(path, () => fetchJson('MODIS', `${TOKEN_BASE}/${path}`, { fetchImpl, timeoutMs: 15_000 }));
+    const readings = await mapLimit(items, 6, async (item) => {
+      try {
+        const [ndviRaw, qa] = await Promise.all([
+          readPixel(item.assets[NDVI_ASSET].href, token, px),
+          item.assets[QA_ASSET] ? readPixel(item.assets[QA_ASSET].href, token, px) : null,
+        ]);
+        return { date: item.properties.start_datetime.slice(0, 10), ndviRaw, qa };
+      } catch {
+        return null;
+      }
+    });
+    const values = buildSeries(readings.filter(Boolean));
+    const normal = values.length ? Math.round((values.reduce((s, v) => s + v.ndvi, 0) / values.length) * 1000) / 1000 : null;
+    return { normal, values };
+  });
+}
+const normalCache = makeCache(24 * 60 * 60 * 1000);
+
 const SOURCE = 'NASA MODIS MOD13Q1/MYD13Q1 v061 (via Microsoft Planetary Computer)';
