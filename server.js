@@ -76,7 +76,11 @@ function sendError(res, err) {
   res.status(502).json({ error: err.message || 'Something went wrong' });
 }
 
+// Vercel runs the default export as the app (static files in public/ are served by its CDN).
+const app = createApp();
+export default app;
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT) || 3000;
-  createApp().listen(port, () => console.log(`Kisan AI running at http://localhost:${port}`));
+  app.listen(port, () => console.log(`Kisan AI running at http://localhost:${port}`));
 }
