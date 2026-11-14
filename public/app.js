@@ -284,16 +284,6 @@ async function init() {
     applyText();
   };
 
-  try {
-    state.meta = await api('/api/meta');
-  } catch {
-    state.meta = { crops: [], languages: { en: 'English' } };
-  }
-  const askSel = $('#ask-lang');
-  askSel.innerHTML = Object.entries(state.meta.languages).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
-  askSel.value = store('askLang') ?? getLang();
-  applyText();
-
   document.querySelectorAll('[role=tab]').forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
   showTab(store('tab') ?? 'climate');
 
@@ -318,6 +308,17 @@ async function init() {
   $('#make-plan').onclick = makePlan;
   $('#ask-form').onsubmit = ask;
   setupMic();
+
+  try {
+    state.meta = await api('/api/meta');
+  } catch {
+    state.meta = { crops: [], languages: { en: 'English' } };
+  }
+  const askSel = $('#ask-lang');
+  askSel.innerHTML = Object.entries(state.meta.languages).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
+  askSel.value = store('askLang') ?? getLang();
+  applyText();
+
 
   const saved = store('coords');
   if (saved) {
