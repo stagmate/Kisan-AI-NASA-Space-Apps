@@ -43,6 +43,13 @@ export function formatContext(ctx) {
   for (const s of ctx.seasons) {
     lines.push(`${s.id}: mean ${s.tempMean}°C, hottest ${s.tempMax}°C, coldest ${s.tempMin}°C, rain ${s.rainMm} mm`);
   }
+  if (ctx.soil) {
+    const so = ctx.soil;
+    lines.push(`Soil (ISRIC SoilGrids, 0-30 cm): ${so.texture?.replace(/_/g, ' ')}, sand ${so.sand}%, clay ${so.clay}%, pH ${so.ph ?? '?'}, organic carbon ${so.organicCarbon ?? '?'} g/kg`);
+  }
+  if (ctx.soilMoisture != null) lines.push(`Root-zone soil moisture now (Open-Meteo model): ${ctx.soilMoisture} m³/m³`);
+  if (ctx.advice) lines.push(`Watering advice shown to farmer: ${ctx.advice.code}${ctx.advice.amountMm ? ` (~${ctx.advice.amountMm} mm)` : ''}; rain next 7 days ${ctx.advice.rain7} mm vs crop demand ${ctx.advice.et7} mm`);
+  if (ctx.ndvi?.latest) lines.push(`Satellite greenness (NASA MODIS NDVI) on ${ctx.ndvi.latest.date}: ${ctx.ndvi.latest.ndvi} (${ctx.ndvi.status}${ctx.ndvi.trend ? `, ${ctx.ndvi.trend} over the last month` : ''})`);
   if (ctx.irrigation) lines.push(`Irrigation available: ${ctx.irrigation}`);
   if (ctx.lastCrop) lines.push(`Last crop: ${ctx.lastCrop}`);
   if (Array.isArray(ctx.plan) && ctx.plan.length) lines.push(`Suggested rotation: ${ctx.plan.join(' → ')}`);

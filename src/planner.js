@@ -12,7 +12,7 @@ const EFFECTIVE_RAIN = 0.7;
 const FALLOW = { id: 'fallow', family: 'none', nitrogen: 'light', value: 0, waterMm: 0 };
 
 /** Score how well one crop fits one season. Returns null when it clearly cannot grow. */
-export function scoreCrop(crop, season, irrigation = 'rainfed', storedMm = 0) {
+export function scoreCrop(crop, season, irrigation = 'rainfed', storedMm = 0, soil = null) {
   if (!crop.seasons.includes(season.id)) return null;
   const warnings = [];
   const reasons = [];
@@ -46,6 +46,16 @@ export function scoreCrop(crop, season, irrigation = 'rainfed', storedMm = 0) {
     penalty += 10;
     warnings.push('frost_risk');
   }
+  if (soil?.ph != null && crop.phRange) {
+    const [pLo, pHi] = crop.phRange;
+    const phOff = soil.ph < pLo ? pLo - soil.ph : soil.ph > pHi ? soil.ph - pHi : 0;
+    if (phOff > 0) {
+      penalty += Math.min(20, Math.round(phOff * 12));
+      warnings.push(soil.ph < pLo ? 'soil_too_acidic' : 'soil_too_alkaline');
+    } else {
+      reasons.push('soil_ph_suits');
+    }
+  }
   if (crop.nitrogen === 'fix') reasons.push('adds_nitrogen');
 
   const score = Math.max(0, Math.round(tempScore + waterScore + valueScore - penalty));
@@ -53,8 +63,8 @@ export function scoreCrop(crop, season, irrigation = 'rainfed', storedMm = 0) {
 }
 
 /** Best candidates for a season, highest score first. */
-export function rankCrops(season, irrigation, limit = 6, storedMm = 0) {
-  return CROPS.map((c) => scoreCrop(c, season, irrigation, storedMm))
+export function rankCrops(season, irrigation, limit = 6, storedMm = 0, soil = null) {
+  return CROPS.map((c) => scoreCrop(c, season, irrigation, storedMm, soil))
     .filter(Boolean)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
@@ -68,8 +78,11 @@ function cropOf(id) {
  * Soil water left after the monsoon that a Rabi crop can draw on
  * (how chickpea and mustard grow without irrigation on heavier soils).
  */
-export function monsoonCarryover(kharifRainMm) {
-  return Math.round(Math.min(150, Math.max(0, (kharifRainMm - 400) * 0.4)));
+export function monsoonCarryover(kharifRainMm, soil = null) {
+  // Heavier soils hold more of the monsoon for the next crop; sandy soils drain it away.
+  const holding = soil?.water ? (soil.water.fc - soil.water.wp) / 0.15 : 1;
+  const factor = Math.max(0.5, Math.min(1.4, holding));
+  return Math.round(Math.min(200, Math.max(0, (kharifRainMm - 400) * 0.4 * factor)));
 }
 
 /** Score a full sequence of picks (one per season, in calendar order). */
@@ -145,12 +158,12 @@ export function scoreSequence(picks, { lastCrop = null, priority = 'balanced' } 
  * @param {string} [opts.lastCrop]  crop grown in the season before the coming Kharif
  * @param {string} [opts.priority]  balanced | income | soil | water
  */
-export function planRotations({ seasons, irrigation = 'rainfed', lastCrop = null, priority = 'balanced', count = 3 }) {
+export function planRotations({ seasons, irrigation = 'rainfed', lastCrop = null, priority = 'balanced', count = 3, soil = null }) {
   const byId = Object.fromEntries(seasons.map((s) => [s.id, s]));
   const order = ['kharif', 'rabi', 'zaid'];
-  const stored = monsoonCarryover(byId.kharif.rainMm);
+  const stored = monsoonCarryover(byId.kharif.rainMm, soil);
   const options = order.map((id) => {
-    const ranked = rankCrops(byId[id], irrigation, 6, id === 'rabi' ? stored : 0);
+    const ranked = rankCrops(byId[id], irrigation, 6, id === 'rabi' ? stored : 0, soil);
     // Leaving land fallow is always possible; it scores low but is better than a failed crop.
     ranked.push({ crop: 'fallow', season: id, score: id === 'zaid' ? 45 : 30, irrigationNeed: 0, reasons: ['rest_soil'], warnings: [] });
     return ranked;

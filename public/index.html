@@ -33,16 +33,16 @@
         <label class="grow"><span data-i18n="or_pick"></span>
           <select id="preset">
             <option value="">—</option>
-            <option value="28.61,77.21">Delhi</option>
-            <option value="26.85,80.95">Lucknow, UP</option>
-            <option value="30.90,75.85">Ludhiana, Punjab</option>
-            <option value="21.15,79.09">Nagpur, Maharashtra</option>
-            <option value="17.39,78.49">Hyderabad, Telangana</option>
-            <option value="12.97,77.59">Bengaluru, Karnataka</option>
-            <option value="10.79,78.70">Tiruchirappalli, Tamil Nadu</option>
-            <option value="22.57,88.36">Kolkata, West Bengal</option>
-            <option value="26.92,75.79">Jaipur, Rajasthan</option>
-            <option value="25.59,85.14">Patna, Bihar</option>
+            <option value="28.55,76.90">Najafgarh, Delhi</option>
+            <option value="26.75,80.80">Near Lucknow, Uttar Pradesh</option>
+            <option value="30.85,75.70">Near Ludhiana, Punjab</option>
+            <option value="21.05,79.20">Near Nagpur, Maharashtra</option>
+            <option value="17.25,78.35">Near Hyderabad, Telangana</option>
+            <option value="13.10,77.45">Near Bengaluru, Karnataka</option>
+            <option value="10.85,78.80">Cauvery delta, Tamil Nadu</option>
+            <option value="22.70,88.10">Hooghly, West Bengal</option>
+            <option value="26.85,75.60">Near Jaipur, Rajasthan</option>
+            <option value="25.50,85.25">Near Patna, Bihar</option>
           </select>
         </label>
       </div>
@@ -55,6 +55,22 @@
     </section>
 
     <section id="tab-climate" class="tab-panel">
+      <p id="field-status" class="status"></p>
+      <div class="card" id="week-card" hidden>
+        <h2 data-i18n="field_week"></h2>
+        <div id="week"></div>
+        <p class="source" data-i18n="adv_source"></p>
+      </div>
+      <div class="card" id="ndvi-card" hidden>
+        <h2 data-i18n="field_ndvi"></h2>
+        <div id="ndvi"></div>
+        <p class="source" data-i18n="ndvi_source"></p>
+      </div>
+      <div class="card" id="soil-card" hidden>
+        <h2 data-i18n="field_soil"></h2>
+        <div id="soil"></div>
+        <p class="source" data-i18n="soil_source"></p>
+      </div>
       <div class="card" id="climate-out" hidden>
         <div id="chart" class="chart"></div>
         <div id="seasons" class="seasons"></div>
@@ -107,7 +123,7 @@
     </section>
   </main>
 
-  <footer class="foot">NASA Space Apps Challenge 2026 · Data: NASA POWER (power.larc.nasa.gov)</footer>
+  <footer class="foot">NASA Space Apps Challenge 2026 · Data: NASA POWER · NASA MODIS · ISRIC SoilGrids · Open-Meteo</footer>
   <script type="module" src="app.js"></script>
 </body>
 </html>

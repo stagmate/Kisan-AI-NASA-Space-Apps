@@ -61,3 +61,16 @@ test('priority changes the ranking weights', () => {
   const income = planRotations({ seasons, irrigation: 'full', priority: 'income' }).plans[0];
   assert.ok(water.irrigationMm <= income.irrigationMm);
 });
+
+test('soil pH penalises crops outside their range; heavier soil stores more monsoon water', () => {
+  const rabi = season('rabi');
+  const acid = { ph: 5.0, water: { fc: 0.28, wp: 0.13 } };
+  const potato = scoreCrop(getCrop('potato'), rabi, 'full', 0, acid);
+  const chickpea = scoreCrop(getCrop('chickpea'), rabi, 'full', 0, acid);
+  assert.ok(chickpea.warnings.includes('soil_too_acidic'));
+  assert.ok(!potato.warnings.includes('soil_too_acidic'));
+  const clay = { water: { fc: 0.40, wp: 0.26 } };
+  const sand = { water: { fc: 0.12, wp: 0.05 } };
+  assert.ok(monsoonCarryover(700, clay) >= monsoonCarryover(700, sand));
+  assert.ok(planRotations({ seasons, irrigation: 'limited', soil: acid }).plans.length > 0);
+});

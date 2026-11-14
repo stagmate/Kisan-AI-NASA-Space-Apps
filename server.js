@@ -7,12 +7,23 @@ import { analyzeClimate } from './src/seasons.js';
 import { planRotations, IRRIGATION_MM, PRIORITIES } from './src/planner.js';
 import { CROP_IDS } from './src/crops.js';
 import { askAssistant, LANGUAGES } from './src/assistant.js';
+import { getSoil, soilNotes } from './src/soil.js';
+import { getForecast, wateringAdvice } from './src/forecast.js';
+import { getNdvi } from './src/ndvi.js';
+import { validateCoords } from './src/nasaPower.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
 const hasClaudeKey = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
-export function createApp({ climateSource = getClimatology, ask = askAssistant, assistantReady = hasClaudeKey } = {}) {
+export function createApp({
+  climateSource = getClimatology,
+  soilSource = getSoil,
+  forecastSource = getForecast,
+  ndviSource = getNdvi,
+  ask = askAssistant,
+  assistantReady = hasClaudeKey,
+} = {}) {
   const app = express();
   app.use(express.json({ limit: '64kb' }));
   app.use(express.static(path.join(here, 'public')));
@@ -32,15 +43,56 @@ export function createApp({ climateSource = getClimatology, ask = askAssistant, 
     }
   });
 
+  // Live field data: soil (SoilGrids), 7-day forecast + soil moisture (Open-Meteo), crop greenness (MODIS).
+  // Each source is independent; a failure in one is reported without hiding the others.
+  app.get('/api/field', async (req, res) => {
+    try {
+      const { lat, lon } = validateCoords(req.query.lat, req.query.lon);
+      const want = new Set(String(req.query.parts || 'soil,forecast,ndvi').split(','));
+      const run = (name, fn) => (want.has(name) ? fn() : Promise.resolve(undefined));
+      const [soilR, forecastR, ndviR] = await Promise.allSettled([
+        run('soil', () => soilSource(lat, lon)),
+        run('forecast', () => forecastSource(lat, lon)),
+        run('ndvi', () => ndviSource(lat, lon)),
+      ]);
+      const out = { lat, lon, errors: {} };
+      const take = (name, r) => {
+        if (r.status === 'fulfilled') {
+          if (r.value !== undefined) out[name] = r.value;
+        } else {
+          console.error(`${name} failed:`, r.reason?.message);
+          out.errors[name] = r.reason?.message || 'unavailable';
+        }
+      };
+      take('soil', soilR);
+      take('forecast', forecastR);
+      take('ndvi', ndviR);
+      if (want.has('soil') && soilR.status === 'fulfilled' && soilR.value === null) out.errors.soil = 'SoilGrids: no soil data here';
+      if (out.soil) out.soilNotes = soilNotes(out.soil);
+      if (out.forecast) out.advice = wateringAdvice(out.forecast, out.soil?.texture);
+      res.json(out);
+    } catch (err) {
+      sendError(res, err);
+    }
+  });
+
   app.post('/api/plan', async (req, res) => {
     try {
       const { lat, lon, irrigation = 'rainfed', lastCrop = null, priority = 'balanced' } = req.body ?? {};
       if (!(irrigation in IRRIGATION_MM)) throw new RangeError('Unknown irrigation level');
       if (!PRIORITIES.includes(priority)) throw new RangeError('Unknown priority');
       if (lastCrop && !CROP_IDS.includes(lastCrop)) throw new RangeError('Unknown last crop');
-      const climate = analyzeClimate(await climateSource(lat, lon));
-      const result = planRotations({ seasons: climate.seasons, irrigation, lastCrop, priority });
-      res.json({ climate, ...result });
+      // Soil is optional: plans still work from climate alone if SoilGrids is down.
+      const [climateRaw, soil] = await Promise.all([
+        climateSource(lat, lon),
+        soilSource(lat, lon).catch((err) => {
+          console.error('soil failed:', err.message);
+          return null;
+        }),
+      ]);
+      const climate = analyzeClimate(climateRaw);
+      const result = planRotations({ seasons: climate.seasons, irrigation, lastCrop, priority, soil });
+      res.json({ climate, soil, ...result });
     } catch (err) {
       sendError(res, err);
     }

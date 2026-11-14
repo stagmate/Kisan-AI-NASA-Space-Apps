@@ -112,3 +112,23 @@ li.warn::before { content: "⚠️"; }
 #mic.live { background: var(--warn); color: #fff; border-color: var(--warn); }
 
 .foot { text-align: center; font-size: .8rem; color: var(--muted); padding: 16px; }
+
+/* live field cards */
+.advice { font-size: 1.15rem; font-weight: 700; margin: 0 0 4px; }
+.advice.water_now { color: var(--warn); }
+.advice.water_soon { color: var(--temp); }
+.advice.rain_coming { color: var(--rain); }
+.advice.no_need, .advice.ndvi-dense, .advice.ndvi-moderate { color: var(--good); }
+.advice.ndvi-bare, .advice.ndvi-sparse { color: var(--warn); }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; align-items: end; margin-top: 10px; text-align: center; font-size: .75rem; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.dname { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.rainbar { width: 60%; min-height: 2px; background: var(--rain); border-radius: 3px 3px 0 0; margin-top: auto; }
+.rmm { font-weight: 600; }
+.tt { color: var(--muted); font-size: .7rem; white-space: nowrap; }
+.spark { width: 100%; height: auto; display: block; margin-top: 8px; }
+.spark .ndvi-line { fill: none; stroke: var(--good); stroke-width: 2.5; }
+.spark .ndvi-dot { fill: var(--good); }
+.spark .grid { stroke: var(--line); stroke-dasharray: 4 4; }
+.spark .axis { font-size: 9px; fill: var(--muted); }
+.soil-dl { grid-template-columns: 1fr auto; margin-bottom: 8px; }

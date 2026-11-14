@@ -1,7 +1,7 @@
 import { UI_LANGS, setLang, getLang, t, monthName, cropName, insightText } from './i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { climate: null, plan: null, history: [], meta: null };
+const state = { climate: null, plan: null, history: [], meta: null, field: null };
 
 function store(key, value) {
   try {
@@ -41,6 +41,7 @@ function applyText() {
   fillCropSelect();
   if (state.climate) renderClimate();
   if (state.plan) renderPlans();
+  if (state.field) renderField();
 }
 
 function fillCropSelect() {
@@ -78,6 +79,7 @@ async function loadClimate() {
   if (!c) return setStatus(t('need_location'), true);
   store('coords', c);
   setStatus(t('loading'));
+  loadField(c);
   try {
     state.climate = await api(`/api/climate?lat=${c.lat}&lon=${c.lon}`);
     state.plan = null;
@@ -87,6 +89,120 @@ async function loadClimate() {
   } catch (err) {
     setStatus(t('error', { msg: err.message }), true);
   }
+}
+
+// ---------- live field data: forecast, soil, satellite ----------
+let fieldRequest = 0;
+// Soil + forecast come back in a few seconds; the satellite series is slower, so it loads on its own.
+async function loadField(c) {
+  const id = ++fieldRequest;
+  state.field = { errors: {} };
+  ['#week-card', '#soil-card', '#ndvi-card'].forEach((sel) => ($(sel).hidden = true));
+  $('#field-status').textContent = t('field_loading');
+  const part = async (parts) => {
+    try {
+      const res = await api(`/api/field?lat=${c.lat}&lon=${c.lon}&parts=${parts}`);
+      if (id !== fieldRequest) return; // a newer location was picked meanwhile
+      const { errors, ...data } = res;
+      Object.assign(state.field, data);
+      Object.assign(state.field.errors, errors);
+    } catch (err) {
+      if (id !== fieldRequest) return;
+      for (const p of parts.split(',')) state.field.errors[p] = err.message;
+    }
+    renderField();
+  };
+  await Promise.all([part('soil,forecast'), part('ndvi')]);
+  if (id === fieldRequest) renderField();
+}
+
+const SOURCE_NAMES = { forecast: 'Open-Meteo', soil: 'SoilGrids', ndvi: 'NASA MODIS' };
+
+function renderField() {
+  const f = state.field;
+  if (!f) return;
+  ['#week-card', '#soil-card', '#ndvi-card'].forEach((sel) => ($(sel).hidden = true));
+  const missing = Object.keys(f.errors ?? {}).map((k) => t('src_unavailable', { name: SOURCE_NAMES[k] ?? k }));
+  const pending = !f.forecast && !f.errors?.forecast || !f.ndvi && !f.errors?.ndvi;
+  $('#field-status').textContent = [...missing, pending ? t('field_loading') : ''].join(' ').trim();
+
+  // Watering this week
+  if (f.forecast && f.advice) {
+    const a = f.advice;
+    const head = {
+      water_now: t('adv_water_now', { mm: a.amountMm }),
+      water_soon: t('adv_water_soon', { days: a.days, mm: a.amountMm }),
+      rain_coming: t('adv_rain_coming', { rain: a.rain3 }),
+      no_need: t('adv_no_need'),
+    }[a.code];
+    const detail = a.available == null
+      ? t('adv_detail_nosoil', { rain: a.rain7, et: a.et7 })
+      : t('adv_detail', { pct: a.available, rain: a.rain7, et: a.et7 });
+    const maxRain = Math.max(10, ...f.forecast.days.map((d) => d.rainMm));
+    const days = f.forecast.days.map((d) => {
+      const dt = new Date(`${d.date}T12:00:00`);
+      const label = dt.toLocaleDateString(LOCALES[getLang()] ?? 'en-IN', { weekday: 'short' });
+      const h = Math.round((d.rainMm / maxRain) * 48);
+      return `<div class="day"><span class="dname">${esc(label)}</span>
+        <span class="rainbar" style="height:${h}px" title="${d.rainMm} mm"></span>
+        <span class="rmm">${Math.round(d.rainMm)}</span>
+        <span class="tt">${Math.round(d.tMax)}° / ${Math.round(d.tMin)}°</span></div>`;
+    }).join('');
+    $('#week').innerHTML = `<p class="advice ${a.code}">${esc(head)}</p><p class="hint">${esc(detail)}</p><div class="days">${days}</div>`;
+    $('#week-card').hidden = false;
+  }
+
+  // Satellite crop health
+  if (f.ndvi) {
+    const n = f.ndvi;
+    let html = '';
+    if (!n.latest) {
+      html = `<p>${esc(t('ndvi_no_clear_image'))}</p>`;
+    } else {
+      html = `<p class="advice ndvi-${n.status}">${esc(t(`ndvi_${n.status}`))}</p>
+        <p class="hint">${esc(t('ndvi_latest', { value: n.latest.ndvi.toFixed(2), date: formatDate(n.latest.date) }))}${n.trend ? ` · ${esc(t(`ndvi_${n.trend}`))}` : ''}</p>
+        ${renderSparkline(n.series)}`;
+    }
+    $('#ndvi').innerHTML = html;
+    $('#ndvi-card').hidden = false;
+  }
+
+  // Soil
+  if (f.soil) {
+    const so = f.soil;
+    $('#soil').innerHTML = `<dl class="soil-dl">
+        <dt>${esc(t('soil_texture'))}</dt><dd>${esc(t(`tex_${so.texture}`))}</dd>
+        <dt>${esc(t('soil_mix'))}</dt><dd>${Math.round(so.sand)} / ${Math.round(so.silt)} / ${Math.round(so.clay)} %</dd>
+        <dt>${esc(t('soil_ph'))}</dt><dd>${so.ph ?? '–'}</dd>
+        <dt>${esc(t('soil_carbon'))}</dt><dd>${so.organicCarbon ?? '–'} g/kg</dd>
+      </dl>
+      ${so.nearby ? `<p class="hint">${esc(t('soil_nearby'))}</p>` : ''}
+      <ul class="insights">${(f.soilNotes ?? []).map((nt) => `<li class="${nt.level}">${esc(t(`n_${nt.code}`, { value: nt.value }))}</li>`).join('')}</ul>`;
+    $('#soil-card').hidden = false;
+  }
+}
+
+const LOCALES = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', kn: 'kn-IN', ml: 'ml-IN', te: 'te-IN' };
+
+function formatDate(iso) {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString(LOCALES[getLang()] ?? 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderSparkline(series) {
+  if (series.length < 2) return '';
+  const W = 340, H = 90, pad = 6;
+  const t0 = Date.parse(series[0].date), t1 = Date.parse(series[series.length - 1].date);
+  const x = (d) => pad + ((Date.parse(d) - t0) / (t1 - t0 || 1)) * (W - 2 * pad);
+  const y = (v) => H - pad - Math.max(0, Math.min(1, v)) * (H - 2 * pad);
+  const path = series.map((p, i) => `${i ? 'L' : 'M'}${x(p.date).toFixed(1)},${y(p.ndvi).toFixed(1)}`).join(' ');
+  const last = series[series.length - 1];
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" role="img" aria-label="NDVI">
+    <line class="grid" x1="${pad}" x2="${W - pad}" y1="${y(0.4)}" y2="${y(0.4)}"/>
+    <path class="ndvi-line" d="${path}"/>
+    <circle class="ndvi-dot" cx="${x(last.date).toFixed(1)}" cy="${y(last.ndvi).toFixed(1)}" r="4"/>
+    <text class="axis" x="${pad}" y="${H - 1}">${esc(formatDate(series[0].date))}</text>
+    <text class="axis" x="${W - pad}" y="${H - 1}" text-anchor="end">${esc(formatDate(last.date))}</text>
+  </svg>`;
 }
 
 // ---------- climate view ----------
@@ -200,6 +316,10 @@ function fieldContext() {
     irrigation: state.plan?.input.irrigation,
     lastCrop: state.plan?.input.lastCrop ?? undefined,
     plan: state.plan?.plans[0]?.picks.map((p) => `${p.season}: ${p.crop}`),
+    soil: state.field?.soil ?? state.plan?.soil ?? undefined,
+    soilMoisture: state.field?.forecast?.soilMoisture,
+    advice: state.field?.advice,
+    ndvi: state.field?.ndvi ? { latest: state.field.ndvi.latest, status: state.field.ndvi.status, trend: state.field.ndvi.trend } : undefined,
   };
 }
 
