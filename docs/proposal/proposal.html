@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kisan AI Proposal</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  :root {
+    --ink: #1d2a1d; --muted: #5b6a5b; --line: #dde4d6; --accent: #2f6b2f; --accent-2: #4f8f3a;
+    --soft: #eef5ea; --soft-2: #f6f4ec; --warn: #b45309; --blue: #2f6f9f; --sand: #c9b28a;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font-family: Inter, "DejaVu Sans", sans-serif; color: var(--ink); font-size: 10.2pt; line-height: 1.5; }
+  h1, h2, h3 { font-family: "Inter Display", Inter, sans-serif; line-height: 1.2; }
+  h2 { font-size: 17pt; color: var(--accent); margin: 0 0 4mm; padding-top: 1mm; break-after: avoid; }
+  h2 .num { color: var(--muted); font-weight: 500; margin-right: 6px; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 2mm; break-after: avoid; }
+  p { margin: 0 0 3mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin: 0 0 1.2mm; }
+  section { margin-top: 9mm; }
+  section.pb { break-before: page; margin-top: 0; }
+  .avoid { break-inside: avoid; }
+  .muted { color: var(--muted); }
+  .small { font-size: 8.8pt; }
+  table { width: 100%; border-collapse: collapse; font-size: 8.8pt; margin: 2mm 0 4mm; }
+  th, td { border-bottom: 1px solid var(--line); padding: 1.6mm 2mm; text-align: left; vertical-align: top; }
+  thead th { background: var(--soft); color: var(--accent); font-weight: 600; border-bottom: 1.5px solid var(--accent); }
+  tr { break-inside: avoid; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.4pt; background: var(--soft-2); padding: 0 1mm; border-radius: 1mm; }
+  .formula { font-family: "DejaVu Sans Mono", monospace; font-size: 8.8pt; background: var(--soft-2); border-left: 3px solid var(--accent-2); padding: 2mm 3mm; margin: 2mm 0 3mm; border-radius: 0 2mm 2mm 0; }
+  .callout { background: var(--soft); border-radius: 3mm; padding: 3.5mm 4.5mm; margin: 3mm 0 4mm; }
+  .callout.warn { background: #fbf1e3; border-left: 4px solid var(--warn); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+  .stat { border: 1px solid var(--line); border-radius: 3mm; padding: 3mm 3.5mm; }
+  .stat b { display: block; font-size: 18pt; color: var(--accent); font-family: "Inter Display", Inter, sans-serif; line-height: 1.1; }
+  .stat span { font-size: 8.6pt; color: var(--muted); }
+  figure { margin: 0 0 4mm; break-inside: avoid; text-align: center; }
+  figure img { border: 1px solid var(--line); border-radius: 3mm; max-width: 100%; max-height: 118mm; width: auto; }
+  figcaption { font-size: 8.2pt; color: var(--muted); margin-top: 1.5mm; text-align: left; }
+  .shots { display: grid; gap: 5mm; align-items: start; }
+  .shots.c2 { grid-template-columns: 1fr 1fr; }
+  .shots.c3 { grid-template-columns: 1fr 1fr 1fr; }
+  .tag { display: inline-block; font-size: 7.6pt; padding: 0.2mm 2mm; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+  .tag.live { color: var(--accent); }
+  .tag.plan { color: var(--warn); }
+
+  /* cover */
+  .cover { height: 261mm; display: flex; flex-direction: column; justify-content: space-between; break-after: page; }
+  .cover .band { background: var(--accent); color: #fff; border-radius: 5mm; padding: 14mm 12mm 12mm; }
+  .cover .kicker { font-size: 10pt; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  .cover h1 { font-size: 40pt; margin: 4mm 0 2mm; }
+  .cover .sub { font-size: 15pt; font-weight: 500; opacity: .95; max-width: 150mm; }
+  .cover .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 8mm; font-size: 9.5pt; margin-top: 10mm; }
+  .cover .meta b { display: block; font-size: 8pt; text-transform: uppercase; letter-spacing: .08em; opacity: .75; font-weight: 600; }
+  .cover .pitch { font-size: 12pt; line-height: 1.55; margin: 0; }
+  .cover .bottom { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8mm; align-items: end; }
+  .cover .shots-mini { display: flex; gap: 3mm; justify-content: flex-end; }
+  .cover .shots-mini img { width: 38mm; border-radius: 3mm; border: 1px solid var(--line); }
+
+  .toc { columns: 2; column-gap: 10mm; font-size: 9.6pt; padding-left: 5mm; }
+  .toc li { break-inside: avoid; }
+  .flow { display: flex; gap: 2mm; align-items: stretch; margin: 3mm 0 4mm; }
+  .flow div { flex: 1; background: var(--soft); border-radius: 2.5mm; padding: 2.5mm 3mm; font-size: 8.6pt; }
+  .flow div b { display: block; color: var(--accent); font-size: 9.4pt; margin-bottom: .8mm; }
+  .flow .arrow { flex: 0 0 4mm; background: none; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12pt; }
+  .footer-note { font-size: 8pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 2mm; margin-top: 6mm; }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<div class="cover">
+  <div class="band">
+    <div class="kicker">NASA Space Apps Challenge 2026 · Project Proposal</div>
+    <h1>Kisan AI</h1>
+    <div class="sub">Turning NASA Earth observations into clear, explainable crop, water and soil decisions for India's small farmers — in their own language.</div>
+    <div class="meta">
+      <div><b>Live application</b>kisan-ai-space-apps.vercel.app</div>
+      <div><b>Source code</b>github.com/stagmate/Kisan-AI-NASA-Space-Apps</div>
+      <div><b>Team</b>Team Kisan AI</div>
+      <div><b>Date</b>November 2026</div>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="stat"><b>10</b><span>data sources — NASA POWER, MODIS, SMAP, GPM IMERG, GRACE, GEDI, HLS, SoilGrids, terrain, mandi prices</span></div>
+    <div class="stat"><b>3 decisions</b><span>water this week · crop stress with likely cause · crop rotation on eight soil, water and income criteria</span></div>
+    <div class="stat"><b>6 + 9</b><span>interface languages + AI-assistant languages, with voice; 65 automated tests</span></div>
+  </div>
+  <div class="bottom">
+    <div>
+      <p class="pitch">A phone-first web app that tells a farmer <b>whether to water this week</b>, <b>whether their crop is under stress</b>, and <b>which Kharif → Rabi → Zaid rotation suits their land, water and goals</b> — using NASA POWER, MODIS, SMAP, GPM, GRACE and GEDI data with soil, forecast, terrain and mandi-price data, explained in six interface languages and nine assistant languages.</p>
+      <p class="small muted">Every number is produced by documented, testable rules; an AI assistant explains them but does not invent them. The tool supports, and never replaces, the farmer's judgment and local agricultural experts.</p>
+    </div>
+    <div class="shots-mini">
+      <img src="week.png" alt="Watering advice card">
+      <img src="plan.png" alt="Crop plan card">
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONTENTS + SUMMARY ============ -->
+<div>
+  <h2>Contents</h2>
+  <ol class="toc">
+    <li>Executive summary</li>
+    <li>The problem</li>
+    <li>Our solution</li>
+    <li>How it addresses the challenge</li>
+    <li>The application, tab by tab</li>
+    <li>Data sources</li>
+    <li>System architecture</li>
+    <li>Algorithms and models</li>
+    <li>Data fusion and harmonisation</li>
+    <li>Rotation strategy framework</li>
+    <li>Uncertainty and human judgment</li>
+    <li>Farmer-centred design</li>
+    <li>Validation and results</li>
+    <li>Impact, cost and sustainability</li>
+    <li>Risks and mitigations</li>
+    <li>Roadmap</li>
+    <li>Team, originality and credits</li>
+  </ol>
+
+  <h2 style="margin-top:8mm"><span class="num">1</span>Executive summary</h2>
+  <p>Most Indian farm holdings are small and marginal — 86 % are under 2 hectares (Agriculture Census 2015-16). These farmers make high-stakes decisions about water, crop choice and soil care with little access to the satellite and climate data that could guide them, and almost none of it is offered in their language or in plain terms.</p>
+  <p><b>Kisan AI</b> is a working, deployed web application that brings that data to a farmer's phone. For any field in India it combines <b>ten data sources</b> — led by NASA POWER, MODIS, and NASA GIBS layers from SMAP, GPM IMERG, GRACE, GEDI and HLS — with soil maps, weather forecasts, terrain and live mandi prices. From these it produces three practical answers:</p>
+  <div class="grid3 avoid">
+    <div class="stat"><b>Water</b><span>"Water today — about 30 mm", from forecast rain, crop water demand and root-zone soil moisture adjusted for soil type.</span></div>
+    <div class="stat"><b>Crop health</b><span>A season timeline from satellite greenness that flags possible stress, explains its likely cause and states how sure it is.</span></div>
+    <div class="stat"><b>Rotation</b><span>Three rotations compared on eight soil, water, pest, fodder, income and drought criteria, shaped by the farmer's own limits.</span></div>
+  </div>
+  <p>A map shows NASA layers over time and field-level zones of erosion risk, water-stress hotspots and frost-prone low spots. An AI assistant (Claude) answers questions in nine languages using the field's computed data. The method is fully documented and covered by 65 automated tests.</p>
+  <div class="grid3 avoid" style="margin-top:3mm">
+    <div class="stat"><b>10</b><span>data sources, 7 NASA map layers</span></div>
+    <div class="stat"><b>6 + 9</b><span>interface languages + assistant languages</span></div>
+    <div class="stat"><b>65</b><span>automated tests, all passing</span></div>
+  </div>
+</div>
+
+<!-- ============ PROBLEM ============ -->
+<section class="pb">
+  <h2><span class="num">2</span>The problem</h2>
+  <p>A small farmer in Maharashtra, Punjab or Karnataka faces the same questions every season:</p>
+  <ul>
+    <li><b>Water:</b> irrigating too early wastes scarce groundwater and electricity; too late, and the crop suffers. Decisions are usually made by eye.</li>
+    <li><b>Crop health:</b> stress from dry soil, heat, pests or disease is often noticed only when damage is visible. Farmers have no view of how this season compares with normal.</li>
+    <li><b>Crop choice and rotation:</b> repeating the same crop (for example rice–wheat) depletes nitrogen and organic matter, builds pests and raises water demand, while the monsoon is becoming less predictable. Choosing a better rotation requires weighing climate, soil, water, labour and market prices together.</li>
+    <li><b>Soil health:</b> erosion on slopes, low organic matter and soil acidity or alkalinity are invisible until yields fall.</li>
+  </ul>
+  <p>NASA and other agencies already observe all of this from space — rainfall, soil moisture, vegetation greenness, temperature, groundwater change — and global soil and terrain maps exist. But this data is:</p>
+  <div class="grid2 avoid">
+    <div class="callout"><b>Hard to reach.</b> Spread across portals with different formats, projections, resolutions (30 m to 300 km) and time steps (half-hourly to static).</div>
+    <div class="callout"><b>Hard to read.</b> Expressed as NDVI, volumetric water content or evapotranspiration, in English, with no link to a decision a farmer can act on.</div>
+  </div>
+  <p>The challenge is therefore not a lack of data, but the lack of a tool that <b>combines</b> it, <b>translates</b> it into plain decisions in local languages, is <b>honest about its uncertainty</b>, and leaves room for the farmer's own knowledge.</p>
+
+  <h2 style="margin-top:8mm"><span class="num">3</span>Our solution</h2>
+  <p>Kisan AI is a free, phone-first web app. A farmer chooses their field (GPS, a tap on the map, or a nearby place) and the app assembles everything known about that point from Earth observation and public data, then answers in plain language.</p>
+  <div class="flow avoid">
+    <div><b>1 · Locate</b>GPS, map tap or preset farmland point</div><div class="arrow">→</div>
+    <div><b>2 · Gather</b>NASA climate, satellite greenness, soil, forecast, terrain, prices</div><div class="arrow">→</div>
+    <div><b>3 · Harmonise</b>Put all sources on common monthly and 250 m grids</div><div class="arrow">→</div>
+    <div><b>4 · Decide</b>Explainable rules: water, stress, zones, rotations</div><div class="arrow">→</div>
+    <div><b>5 · Explain</b>Six languages, confidence levels, AI assistant, field-check reminders</div>
+  </div>
+  <p><b>Design principles</b></p>
+  <ul>
+    <li><b>Explainable first.</b> Every advice, score and zone comes from documented rules a farmer or extension worker can follow. The AI assistant explains these results; it does not create them.</li>
+    <li><b>Honest about uncertainty.</b> Each satellite finding carries a confidence level with reasons (clouds, coarse pixels, missing history).</li>
+    <li><b>The farmer decides.</b> Farmers enter their water, labour, fodder needs and crops to avoid; the app repeatedly asks them to confirm in the field and consult their Krishi Vigyan Kendra (KVK).</li>
+    <li><b>Works on any phone.</b> No install, no login, light pages, data sources that fail independently.</li>
+  </ul>
+</section>
+
+<!-- ============ CHALLENGE ALIGNMENT ============ -->
+<section>
+  <h2><span class="num">4</span>How it addresses the challenge</h2>
+  <table>
+    <thead><tr><th style="width:28%">Challenge theme</th><th>What Kisan AI delivers</th></tr></thead>
+    <tbody>
+      <tr><td><b>Understanding conditions &amp; data</b> — temperature, soil moisture, rainfall, evaporation, vegetation stress; explain ET, soil-moisture anomalies, NDVI, frost risk, water balance; satellite vs ground</td><td>Climate tab links each variable to crop vulnerability (heat, frost, dry Rabi, monsoon dependence). The season timeline relates NDVI declines to soil-moisture anomaly, heat days and rainfall deficit. The Learn tab explains evapotranspiration, soil-moisture anomaly, NDVI, frost risk and water balance in six languages, and how satellite and ground measurements differ and combine.</td></tr>
+      <tr><td><b>AI, modelling and data fusion</b> — compare approaches, find seasonal transitions, bare periods and stress, interpret uncertainty, harmonise resolutions</td><td>Rule-based phase detection on smoothed NDVI (bare, green-up, peak, decline), evidence-fusion rules for stress vs harvest, anomalies vs 30-year normals and past years, and a confidence score. All sources are harmonised to a monthly grid and a 250 m MODIS grid. A methods comparison (rules, anomalies, phenology fitting, random forest, LSTM, LLM) explains the choices.</td></tr>
+      <tr><td><b>Rotation strategy exploration</b> — nutrient cycling, erosion, organic matter, pest disruption, water, forage, markets; nitrogen-fixing, cover, deep-rooted and drought-tolerant crops</td><td>Three rotations scored on exactly these eight criteria, using live mandi prices for income. Each plan explains the role of every crop (nitrogen fixer, cover crop, deep-rooted, drought-tolerant, fodder). Priorities (balanced, income, soil health, save water) reweight the ranking.</td></tr>
+      <tr><td><b>Geospatial mapping &amp; visualisation</b> — trends over time, field-level vulnerabilities, timelines, overlays, scenario sliders</td><td>Map tab with seven NASA GIBS layers (MODIS NDVI, SMAP, GPM IMERG, MODIS LST, HLS, GRACE, GEDI), a date slider and transparency for overlays. A 7×7 grid of 250 m cells shows erosion risk, water-stress hotspots and frost-prone low spots. Season timeline strip, monthly data table, and rainfall/temperature what-if sliders that re-plan rotations.</td></tr>
+      <tr><td><b>Farmer-centred design</b> — easy to interpret, farmer inputs and constraints, reminders that local expertise matters</td><td>Six interface languages, voice input and read-aloud, plain one-line meanings for every number. Inputs: water available, last crop, priority, little labour/no machines, fodder needs, crops to avoid. Field-check and KVK reminders on plans, timeline, zones, the Learn tab and in the assistant's rules.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ APP TOUR ============ -->
+<section class="pb">
+  <h2><span class="num">5</span>The application, tab by tab</h2>
+  <p class="muted small">Screenshots from the live deployment for a farmland point near Nagpur, Maharashtra, on 14 November 2026.</p>
+  <h3>Climate — water, crop health, timeline and soil</h3>
+  <div class="shots c3">
+    <figure><img src="week.png" alt=""><figcaption><b>Watering this week.</b> Root-zone soil water (29 % of capacity), no rain forecast and 31 mm crop demand → "Water today, about 30 mm".</figcaption></figure>
+    <figure><img src="ndvi.png" alt=""><figcaption><b>Crop health from satellite.</b> MODIS NDVI, status and 1-month trend over 8 months.</figcaption></figure>
+    <figure><img src="soil.png" alt=""><figcaption><b>Your soil.</b> SoilGrids texture, pH and organic carbon with advice.</figcaption></figure>
+  </div>
+  <div class="shots c2" style="grid-template-columns: 1.05fr 1fr">
+    <figure><img src="timeline.png" alt=""><figcaption><b>Season timeline &amp; stress check.</b> Crop grew June–September; greenness fell in October while soil was drier and rain 83 % below normal → "possible crop stress — check the field", with a confidence level and its reasons.</figcaption></figure>
+    <div>
+      <figure><img src="chart.png" alt=""><figcaption><b>Long-term climate.</b> NASA POWER 30-year monthly rain (bars) and temperature (line), summarised by Kharif, Rabi and Zaid with warnings.</figcaption></figure>
+      <div class="callout small"><b>Example findings the app produced</b><br>
+        Nagpur: green-up 10 Jun – 14 Sep (0.28 → 0.76), then possible stress (dry soil, low rain).<br>
+        Delhi farmland: bare field Apr–Jun (summer fallow), green-up with the monsoon.<br>
+        Ludhiana: greenness 0.16 below normal for early October.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h3 style="margin-top:0">Map — NASA layers over time and field-level zones</h3>
+  <div class="shots c3">
+    <figure><img src="map-stress.png" alt=""><figcaption><b>Field zones on satellite photo.</b> 7×7 grid of 250 m MODIS cells; red = water-stress hotspot (much less green than neighbours and than a past year).</figcaption></figure>
+    <figure><img src="map-smap.png" alt=""><figcaption><b>NASA SMAP L4 root-zone soil moisture</b> around Nagpur via NASA GIBS, with a date slider and transparency control.</figcaption></figure>
+    <figure><img src="zones-card.png" alt=""><figcaption><b>Zone summary.</b> Counts of erosion-risk, stress and frost cells, field slope, and a field-check reminder.</figcaption></figure>
+  </div>
+  <h3>Crop plan — rotations, constraints and comparison</h3>
+  <div class="shots c3">
+    <figure><img src="plan.png" alt=""><figcaption><b>A rotation plan</b> with today's mandi prices, warnings, extra irrigation and rough gross income per acre.</figcaption></figure>
+    <figure><img src="compare.png" alt=""><figcaption><b>Compare the plans</b> on eight criteria; tap a row for its meaning.</figcaption></figure>
+    <figure><img src="mandi.png" alt=""><figcaption><b>Mandi prices today</b> for the state, with the farmer's district highlighted.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h3 style="margin-top:0">Local languages, assistant and learning</h3>
+  <div class="shots c3">
+    <figure><img src="plan-hi.png" alt=""><figcaption><b>Hindi interface.</b> Crop names, seasons, warnings and prices all translate.</figcaption></figure>
+    <figure><img src="ask-ta.png" alt=""><figcaption><b>AI assistant in Tamil,</b> answering a watering and price question using the field's NASA data and today's arhar price.</figcaption></figure>
+    <figure><img src="learn-ta.png" alt=""><figcaption><b>Learn tab in Tamil:</b> NDVI, ET, soil moisture anomaly, frost, water balance, satellite vs ground, and where the farmer's judgment matters.</figcaption></figure>
+  </div>
+  <table>
+    <thead><tr><th>Tab</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><b>Climate</b></td><td>Watering this week, crop health from satellite, season timeline and stress check, your soil, long-term climate and warnings.</td></tr>
+      <tr><td><b>Map</b></td><td>Tap to choose the field; NASA layers with date slider and transparency; erosion, stress and frost zones.</td></tr>
+      <tr><td><b>Crop plan</b></td><td>Farmer inputs and constraints, what-if sliders, three rotations, eight-criteria comparison, crop roles, mandi prices.</td></tr>
+      <tr><td><b>Ask</b></td><td>AI assistant in nine languages with voice input and read-aloud, grounded in the field's computed data.</td></tr>
+      <tr><td><b>Learn</b></td><td>Plain explanations of the science and where local expertise matters.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ DATA ============ -->
+<section class="pb">
+  <h2><span class="num">6</span>Data sources</h2>
+  <table>
+    <thead><tr><th>Dataset</th><th>Variables used</th><th>Resolution</th><th>Time step</th><th>Role in the app</th></tr></thead>
+    <tbody>
+      <tr><td><b>NASA POWER</b> climatology (MERRA-2, bias-corrected rain)</td><td>T2M, T2M_RANGE, T2M_MAX/MIN, PRECTOTCORR, RH2M, ALLSKY_SFC_SW_DWN, GWETROOT, EVPTRNS</td><td>~50 km</td><td>30-yr monthly normals</td><td>Seasons, frost/heat warnings, crop fit, normals for anomalies</td></tr>
+      <tr><td><b>NASA POWER</b> daily</td><td>PRECTOTCORR, T2M_MAX/MIN, GWETROOT, EVPTRNS</td><td>~50 km</td><td>Daily, ~3-day lag</td><td>Timeline, water balance, soil-moisture anomaly</td></tr>
+      <tr><td><b>NASA MODIS</b> MOD13Q1 + MYD13Q1 v061 (Planetary Computer COGs)</td><td>250m_16_days_NDVI, pixel_reliability</td><td>250 m</td><td>8-day (Terra + Aqua)</td><td>Crop health, phases, stress, past-year anomaly, zone grid</td></tr>
+      <tr><td><b>NASA GIBS</b>: SMAP L4, GPM IMERG, MODIS LST, HLS, GRACE, GEDI, MODIS NDVI</td><td>Map layers</td><td>30 m – 300 km</td><td>Daily – static</td><td>Map overlays over time</td></tr>
+      <tr><td>ISRIC <b>SoilGrids 2.0</b></td><td>Clay, sand, silt, pH, organic carbon (0–30 cm)</td><td>250 m</td><td>Static</td><td>Texture, water holding, pH fit, soil advice</td></tr>
+      <tr><td><b>Open-Meteo</b> forecast</td><td>Rain, rain chance, FAO-56 ET₀, temperature, soil moisture 0–27 cm</td><td>1–11 km</td><td>7-day</td><td>Watering advice</td></tr>
+      <tr><td><b>Copernicus DEM</b> GLO-90 (via Open-Meteo)</td><td>Elevation</td><td>90 m</td><td>Static</td><td>Slope, erosion, frost pockets</td></tr>
+      <tr><td><b>data.gov.in</b> Agmarknet daily mandi prices</td><td>Modal / min / max ₹ per quintal, market, district</td><td>Market</td><td>Daily</td><td>Income criterion, prices card</td></tr>
+      <tr><td>OpenStreetMap <b>Nominatim</b></td><td>State, district</td><td>Admin areas</td><td>Static</td><td>Choosing the right mandis</td></tr>
+      <tr><td>OpenStreetMap tiles, Esri World Imagery</td><td>Base maps</td><td>—</td><td>—</td><td>Map background</td></tr>
+    </tbody>
+  </table>
+  <div class="callout small"><b>Why these choices.</b> NASA POWER provides both the current daily values and the 30-year normals from the same MERRA-2 model, so anomalies are not distorted by mixing sources. MODIS NDVI is read pixel-by-pixel from cloud-optimised GeoTIFFs, so only a few kilobytes are downloaded per field. All sources are free; only the mandi prices (free key) and the AI assistant (API key) need credentials.</div>
+
+  <h2 style="margin-top:6mm"><span class="num">7</span>System architecture</h2>
+  <svg viewBox="0 0 680 250" width="100%" style="font-family: Inter, sans-serif; font-size: 10px" role="img" aria-label="Architecture diagram">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6a5b"/></marker></defs>
+    <rect x="10" y="20" width="150" height="210" rx="10" fill="#eef5ea" stroke="#2f6b2f"/>
+    <text x="85" y="40" text-anchor="middle" font-weight="700" fill="#2f6b2f">Farmer's phone</text>
+    <text x="85" y="62" text-anchor="middle">Climate · Map · Crop plan</text>
+    <text x="85" y="76" text-anchor="middle">Ask · Learn</text>
+    <text x="85" y="100" text-anchor="middle">6 languages, voice</text>
+    <text x="85" y="114" text-anchor="middle">HTML/CSS/JS, no install</text>
+    <text x="85" y="150" text-anchor="middle" font-weight="600">Map tiles direct from</text>
+    <text x="85" y="164" text-anchor="middle">NASA GIBS, OSM, Esri</text>
+    <rect x="235" y="20" width="200" height="210" rx="10" fill="#fff" stroke="#2f6b2f"/>
+    <text x="335" y="40" text-anchor="middle" font-weight="700" fill="#2f6b2f">Kisan AI server (Node.js)</text>
+    <text x="335" y="56" text-anchor="middle" class="small" fill="#5b6a5b">Vercel serverless · Mumbai region</text>
+    <g font-size="9.5">
+      <rect x="248" y="66" width="174" height="22" rx="4" fill="#f6f4ec"/><text x="335" y="81" text-anchor="middle">Harmonise: monthly + 250 m grids</text>
+      <rect x="248" y="94" width="174" height="22" rx="4" fill="#f6f4ec"/><text x="335" y="109" text-anchor="middle">Watering advice · soil texture</text>
+      <rect x="248" y="122" width="174" height="22" rx="4" fill="#f6f4ec"/><text x="335" y="137" text-anchor="middle">Timeline · stress · confidence</text>
+      <rect x="248" y="150" width="174" height="22" rx="4" fill="#f6f4ec"/><text x="335" y="165" text-anchor="middle">Zones: erosion · stress · frost</text>
+      <rect x="248" y="178" width="174" height="22" rx="4" fill="#f6f4ec"/><text x="335" y="193" text-anchor="middle">Rotation planner (8 criteria)</text>
+      <rect x="248" y="206" width="174" height="18" rx="4" fill="#eef5ea"/><text x="335" y="219" text-anchor="middle">AI assistant explains results</text>
+    </g>
+    <rect x="510" y="20" width="160" height="210" rx="10" fill="#f6f4ec" stroke="#c9b28a"/>
+    <text x="590" y="40" text-anchor="middle" font-weight="700" fill="#7a5c2e">Data services</text>
+    <g font-size="9.5"><text x="590" y="62" text-anchor="middle">NASA POWER (daily + normals)</text>
+    <text x="590" y="80" text-anchor="middle">MODIS NDVI (Planetary Computer)</text>
+    <text x="590" y="98" text-anchor="middle">ISRIC SoilGrids</text>
+    <text x="590" y="116" text-anchor="middle">Open-Meteo forecast + DEM</text>
+    <text x="590" y="134" text-anchor="middle">data.gov.in mandi prices</text>
+    <text x="590" y="152" text-anchor="middle">OpenStreetMap Nominatim</text>
+    <text x="590" y="170" text-anchor="middle">Claude API (Anthropic)</text></g>
+    <line x1="160" y1="110" x2="232" y2="110" stroke="#5b6a5b" marker-end="url(#ar)"/>
+    <line x1="232" y1="130" x2="163" y2="130" stroke="#5b6a5b" marker-end="url(#ar)"/>
+    <text x="196" y="104" text-anchor="middle" font-size="8.5" fill="#5b6a5b">JSON API</text>
+    <line x1="435" y1="110" x2="507" y2="110" stroke="#5b6a5b" marker-end="url(#ar)"/>
+    <line x1="507" y1="130" x2="438" y2="130" stroke="#5b6a5b" marker-end="url(#ar)"/>
+  </svg>
+  <p class="small">Each data source is fetched independently with a timeout and cached; if one fails, the app names it and shows the rest. Keys are kept on the server. Only three libraries are used: Express, the Anthropic SDK and geotiff.js (Leaflet for the map, loaded on demand).</p>
+</section>
+
+<!-- ============ ALGORITHMS ============ -->
+<section class="pb">
+  <h2><span class="num">8</span>Algorithms and models</h2>
+  <p>All thresholds below are those in the deployed code. Full details are in <code>docs/DOCUMENTATION.md</code>.</p>
+
+  <h3>8.1 Watering advice — water balance with soil-aware moisture</h3>
+  <div class="formula">θ = weighted mean soil moisture 0–27 cm (weights 1, 2, 6, 18 by layer thickness)<br>
+  AW = (θ − WP) / (FC − WP), FC and WP from the SoilGrids texture class (e.g. clay loam 0.34 / 0.20)<br>
+  rain₃ ≥ 15 mm → hold · AW &lt; 0.35 → water now · AW &lt; 0.60 and rain₇ &lt; 0.5·ET₀₇ → water in 2 days · else no need<br>
+  amount = (1 − AW)·(FC − WP)·300 mm, clamped to 15–50 mm</div>
+
+  <h3>8.2 Satellite greenness extraction</h3>
+  <p>The field's latitude/longitude is projected to the MODIS sinusoidal grid (x = R·λ·cosφ, y = R·φ, R = 6 371 007 m) to find the tile and the 250 m pixel. STAC search finds Terra and Aqua composites for the last 8 months; only that pixel is read from each cloud-optimised GeoTIFF. Pixels flagged snow, cloud or no-data are dropped. Status: &lt; 0.2 bare, &lt; 0.4 sparse, &lt; 0.6 moderate, else dense.</p>
+
+  <h3>8.3 Season phase detection</h3>
+  <p>The NDVI series is smoothed (3-point median, then 3-point mean). Each reading is labelled <b>bare</b> (&lt; 0.25), <b>green-up</b> (rise ≥ 0.03), <b>decline</b> (fall ≥ 0.03), <b>peak</b> (≥ 0.45) or <b>steady</b>. Consecutive labels form segments; changes smaller than 0.08 — the noise level of an 8-day 250 m composite — are merged into their neighbours.</p>
+
+  <h3>8.4 Stress versus harvest attribution (evidence fusion)</h3>
+  <table>
+    <thead><tr><th>Stress signal in the same months</th><th>Shape: from ≥ 0.40 to ≤ 0.35</th><th>Finding</th></tr></thead>
+    <tbody>
+      <tr><td>Soil-wetness anomaly ≤ −0.05, or ≥ 5 days ≥ 38 °C, or rain ≤ −40 % of normal</td><td>No</td><td>Possible stress — causes listed, "check the field"</td></tr>
+      <tr><td>Yes (as above)</td><td>Yes</td><td>Harvest, or stress if the crop was still growing</td></tr>
+      <tr><td>None</td><td>Yes</td><td>Likely harvest</td></tr>
+      <tr><td>None</td><td>No</td><td>Unexplained — harvest, pests or disease</td></tr>
+    </tbody>
+  </table>
+
+  <h3>8.5 Anomalies and confidence</h3>
+  <p><b>NDVI anomaly:</b> latest value minus the mean of clear readings ±12 days around the same date in up to three previous years (≤ −0.10 below normal). <b>Soil-moisture anomaly:</b> this month's NASA POWER GWETROOT minus its 30-year normal. <b>Confidence</b> starts at 3 points and loses points for no recent clear image (−2), only 1–2 recent images (−1), a cloud gap over 40 days (−1), no past-year images (−1), or no soil normal (−1): ≥ 3 high, 2 medium, ≤ 1 low. Coarse pixel size is always stated.</p>
+
+  <h3>8.6 Field vulnerability zones</h3>
+  <div class="formula">Grid: 7×7 MODIS cells (~1.6 km, each ≈ 6 ha); elevation at cell centres from the 90 m DEM<br>
+  slope % = √((dz/dx)² + (dz/dy)²)·100 (central differences, spacing 231.66 m)<br>
+  erosion score = slope × (0.3 + bare), bare = 1 − min(NDVI, 0.6)/0.6 → ≥ 4 high, ≥ 1.5 medium<br>
+  stress hotspot: NDVI &lt; grid median − 0.10 AND NDVI &lt; same cell in a past year − 0.10<br>
+  frost pocket (only where nights reach ≤ 4 °C): elevation &gt; 3 m below the grid mean</div>
+
+  <h3>8.7 Crop suitability</h3>
+  <p>Each crop gets up to 100 points per season: temperature fit (40; rejected if the season mean is more than 5 °C outside its range), water fit (40; available water = 70 % of rain + monsoon soil-water carry-over for Rabi + irrigation; rejected below half its need) and value (20), minus penalties for heat above its limit, frost, soil pH outside its range, and hand-labour-heavy crops when the farmer has little labour. Monsoon carry-over = min(200, (Kharif rain − 400)·0.4·f), where f scales with the soil's water-holding capacity.</p>
+
+  <h3>8.8 AI assistant</h3>
+  <p>Claude receives a compact summary of the field's computed data — climate, soil, soil moisture, watering advice, NDVI and timeline findings with confidence, the current plan and today's mandi prices — and answers in the chosen language. Its instructions: plain words, low-cost steps first, base claims on the provided NASA data, never invent prices or subsidies, recommend integrated pest management and the KVK for chemical doses, state how certain coarse satellite data is, and ask the farmer to confirm in the field.</p>
+</section>
+
+<!-- ============ FUSION ============ -->
+<section>
+  <h2><span class="num">9</span>Data fusion and harmonisation</h2>
+  <p>The datasets span 30 m to 300 km and half-hourly to static. Kisan AI aligns them on two common analysis grids and keeps track of the original resolution so it can report uncertainty.</p>
+  <div class="grid2">
+    <div class="callout avoid"><b>Time: a calendar-month grid per field</b>
+      <ul class="small" style="margin-top:2mm">
+        <li>Daily rain and ET → <b>summed</b>; temperature and soil wetness → <b>averaged</b>; heat days and frost nights → <b>counted</b>.</li>
+        <li>8-day NDVI → clear readings <b>averaged</b> per month; image count kept.</li>
+        <li>Each month paired with its 30-year normal; part months compared with the normal for the same number of days.</li>
+        <li>Derived: water balance = rain − ET; anomalies = value − normal.</li>
+      </ul></div>
+    <div class="callout avoid"><b>Space: the MODIS 250 m sinusoidal grid</b>
+      <ul class="small" style="margin-top:2mm">
+        <li><b>Finer → 250 m:</b> the 90 m DEM is sampled per cell to compute slope; 30 m HLS would be averaged per cell <span class="tag plan">designed</span>.</li>
+        <li><b>Coarser → 250 m:</b> SMAP (9 km), IMERG (10 km) and POWER (~50 km) values are assigned to every cell inside them (nearest parent) — no false detail.</li>
+        <li>ECOSTRESS (70 m) and GEDI (1 km) follow the same rules <span class="tag plan">designed</span>.</li>
+      </ul></div>
+  </div>
+  <h3>Approaches compared</h3>
+  <table>
+    <thead><tr><th>Approach</th><th>Finds</th><th>Needs</th><th>Explainable</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Rule-based thresholds on smoothed NDVI</td><td>Bare, green-up, peak, decline</td><td>Time series only</td><td>Yes</td><td><span class="tag live">used</span></td></tr>
+      <tr><td>Anomalies vs climatology and past years</td><td>Drier / less green than usual</td><td>History of the place</td><td>Yes</td><td><span class="tag live">used</span></td></tr>
+      <tr><td>Evidence-fusion rules</td><td>Stress vs harvest with causes</td><td>Harmonised grid</td><td>Yes</td><td><span class="tag live">used</span></td></tr>
+      <tr><td>Harmonic / double-logistic phenology</td><td>Season start and end dates</td><td>Several years of NDVI</td><td>Mostly</td><td><span class="tag plan">next</span></td></tr>
+      <tr><td>Random forest / gradient boosting</td><td>Crop type, stress class, yield risk</td><td>Labelled fields</td><td>Partly</td><td>needs ground truth</td></tr>
+      <tr><td>LSTM / transformer</td><td>Complex seasonal patterns</td><td>Large labelled data</td><td>Weak</td><td>not suitable yet</td></tr>
+      <tr><td>Large language model (Claude)</td><td>Explanations in 9 languages</td><td>Computed context</td><td>Explains only</td><td><span class="tag live">used</span></td></tr>
+    </tbody>
+  </table>
+  <p class="small">Explainable rules were chosen because no labelled ground truth exists yet for these fields and every result must be explainable to a farmer in one sentence. Supervised models become possible once KVK field data is collected (see Roadmap).</p>
+</section>
+
+<!-- ============ ROTATION ============ -->
+<section class="pb">
+  <h2><span class="num">10</span>Rotation strategy framework</h2>
+  <p>The planner searches every Kharif × Rabi × Zaid combination of the best candidate crops for the field (about 300 combinations), treats the rotation as repeating year to year, and scores each on eight criteria (0–100):</p>
+  <table>
+    <thead><tr><th style="width:22%">Criterion</th><th>How it is measured</th></tr></thead>
+    <tbody>
+      <tr><td><b>Nutrient cycling</b></td><td>+ for legumes; + when a legume precedes a heavy feeder; − for two heavy feeders in a row</td></tr>
+      <tr><td><b>Erosion protection</b></td><td>Ground cover in each season weighted by that season's share of annual rain; extra risk for digging harvests; field slope from the DEM</td></tr>
+      <tr><td><b>Organic matter</b></td><td>Crop residue, green manure and deep roots</td></tr>
+      <tr><td><b>Pest-cycle disruption</b></td><td>Penalty for the same crop family back-to-back; bonus for three or more families or a fallow break</td></tr>
+      <tr><td><b>Water use</b></td><td>Irrigation needed beyond normal rain</td></tr>
+      <tr><td><b>Forage potential</b></td><td>Straw, stover, haulm and green fodder value</td></tr>
+      <tr><td><b>Market / income</b></td><td>Today's mandi modal price × typical yield (₹ per acre per year)</td></tr>
+      <tr><td><b>Drought safety</b></td><td>Drought tolerance of the crops</td></tr>
+    </tbody>
+  </table>
+  <h3>Mapping rotations to farmer priorities</h3>
+  <table>
+    <thead><tr><th>Priority</th><th>Climate fit</th><th>Soil health*</th><th>Water</th><th>Income</th><th>Drought</th></tr></thead>
+    <tbody>
+      <tr><td>Balanced</td><td>0.35</td><td>0.25</td><td>0.15</td><td>0.15</td><td>0.10</td></tr>
+      <tr><td>Income</td><td>0.30</td><td>0.15</td><td>0.10</td><td>0.40</td><td>0.05</td></tr>
+      <tr><td>Improve soil</td><td>0.30</td><td>0.45</td><td>0.10</td><td>0.10</td><td>0.05</td></tr>
+      <tr><td>Save water</td><td>0.30</td><td>0.15</td><td>0.35</td><td>0.10</td><td>0.10</td></tr>
+    </tbody>
+  </table>
+  <p class="small">*Soil health = mean of nutrients, erosion, organic matter and pest criteria. Fodder gets weight 0.15 when the farmer needs it; in a drier what-if year drought safety gains up to 0.4. The three best plans that differ in at least two seasons are shown.</p>
+  <h3>How crop types build long-term soil health</h3>
+  <div class="grid2 small">
+    <div class="callout avoid"><b>Nitrogen-fixing crops</b> (chickpea, moong, arhar, groundnut, cowpea): root-nodule bacteria fix nitrogen from the air, feeding the next crop and cutting urea use.</div>
+    <div class="callout avoid"><b>Cover crops and green manure</b> (dhaincha, cowpea): shield bare soil from monsoon rain and add organic matter when ploughed in.</div>
+    <div class="callout avoid"><b>Deep-rooted crops</b> (arhar, sorghum, mustard, maize): break hard pans, recycle leached nutrients and reach stored water.</div>
+    <div class="callout avoid"><b>Drought-tolerant crops</b> (bajra, jowar, cowpea, chickpea): protect income in a weak monsoon — favoured automatically by the "drier year" slider.</div>
+  </div>
+  <div class="callout small"><b>Example (Delhi farmland, limited irrigation):</b> normal year → pigeon pea → chickpea → pearl millet. With the rainfall slider at −40 %, every one of the three plans is built from drought-tolerant crops (for example pearl millet → chickpea → cowpea), and drought safety carries more weight in the ranking.</div>
+</section>
+
+<!-- ============ UNCERTAINTY + DESIGN ============ -->
+<section>
+  <h2><span class="num">11</span>Uncertainty and human judgment</h2>
+  <table>
+    <thead><tr><th>Source of uncertainty</th><th>How the app handles it</th></tr></thead>
+    <tbody>
+      <tr><td>Pixel size: 250 m (~6 ha) satellite, ~50 km weather model</td><td>Stated on every timeline; zones described as "where to look first", not plant-level detail</td></tr>
+      <tr><td>Monsoon clouds hide the field</td><td>Cloudy pixels removed; confidence lowered for few images or long gaps, with the reasons listed</td></tr>
+      <tr><td>Model estimates (soil moisture, ET) and prediction maps (soil)</td><td>Labelled as models; the Learn tab explains why a soil test or rain gauge is better for the exact field</td></tr>
+      <tr><td>Archive gaps</td><td>Past-year comparison falls back up to three years; skipped and flagged if none</td></tr>
+      <tr><td>Prices and yields</td><td>One day's mandi reports, outliers removed; typical yields; income shown as rough gross, costs excluded</td></tr>
+      <tr><td>Points inside towns or on water</td><td>Soil searched up to ~30 km away with distance shown, or a clear message to pick a field point</td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn"><b>Where local expertise is essential.</b> Satellites cannot distinguish crops from weeds, see pests or know seed varieties, labour, credit or buyers. The app asks the farmer to walk the field before acting on a stress finding, to check plans against seed availability, local pests and markets, and to consult the KVK or agriculture officer before big changes. Crop parameters and thresholds should be tuned by KVK scientists for each agro-climatic zone.</div>
+
+  <h2 style="margin-top:6mm"><span class="num">12</span>Farmer-centred design</h2>
+  <ul>
+    <li><b>Language:</b> interface in English, Hindi, Tamil, Kannada, Malayalam and Telugu (crop names, months, warnings included); the assistant also answers in Marathi, Bengali and Punjabi.</li>
+    <li><b>Voice:</b> speak a question; listen to the answer — for farmers who read with difficulty.</li>
+    <li><b>Plain meanings:</b> every number comes with one sentence of meaning ("No need to water now — soil water 90 % full").</li>
+    <li><b>Own priorities and constraints:</b> water available, last crop, priority, little labour or no machines, fodder needs, crops to avoid, and what-if weather.</li>
+    <li><b>Low barriers:</b> no install or login; works on low-end phones; dark mode; each data source loads on its own so the page is useful within seconds.</li>
+  </ul>
+</section>
+
+<!-- ============ VALIDATION / IMPACT ============ -->
+<section class="pb">
+  <h2><span class="num">13</span>Validation and results</h2>
+  <ul>
+    <li><b>65 automated tests</b> run offline on saved real responses: data parsing for every source, harmonisation, phase and stress rules, zone geometry and flags, rotation criteria and constraints, mandi cleaning, translations in all six languages, and every API endpoint.</li>
+    <li><b>End-to-end checks</b> of every feature in a phone-sized browser on the live deployment, in several languages and in dark mode.</li>
+    <li><b>Plausibility on real places:</b></li>
+  </ul>
+  <table>
+    <thead><tr><th>Place</th><th>What the app found</th><th>Agrees with known agronomy?</th></tr></thead>
+    <tbody>
+      <tr><td>Near Nagpur (black clay soil)</td><td>43 % clay, pH 7.4; Kharif green-up June–September; October decline with dry soil and rain 83 % below normal; water now ~30 mm</td><td>Yes — Vidarbha black cotton soils; dry post-monsoon October</td></tr>
+      <tr><td>Delhi farmland</td><td>Monsoon supplies 85 % of rain; bare fields April–June; alkaline soil (pH ~7.9); frost occasional</td><td>Yes — summer fallow before Kharif</td></tr>
+      <tr><td>Near Ludhiana</td><td>March–April decline (wheat harvest); greenness 0.16 below normal in early October; paddy ₹2,461/q in Punjab mandis</td><td>Yes — rice–wheat system, paddy near MSP</td></tr>
+      <tr><td>Kodagu hills</td><td>31 of 49 cells medium/high erosion risk; slopes up to 11 %</td><td>Yes — Western Ghats slopes</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:6mm"><span class="num">14</span>Impact, cost and sustainability</h2>
+  <div class="grid2">
+    <div>
+      <p><b>Expected benefits</b></p>
+      <ul>
+        <li>Fewer unnecessary irrigations — saves groundwater, electricity and diesel.</li>
+        <li>Earlier notice of crop stress, with a likely cause to check.</li>
+        <li>Rotations with legumes and cover crops that cut fertiliser cost and rebuild organic matter.</li>
+        <li>Safer choices in drier years; price-aware crop decisions.</li>
+        <li>Extension workers get a shared, explainable view of a farmer's field.</li>
+      </ul>
+    </div>
+    <div>
+      <p><b>Running cost</b></p>
+      <ul>
+        <li>All Earth-observation, soil, forecast, terrain and price data are free.</li>
+        <li>Hosting on a serverless platform; results cached for hours to days per location.</li>
+        <li>The only per-use cost is the optional AI assistant (pay per question), which can be capped by a monthly limit.</li>
+        <li>Open, documented code that KVKs, NGOs or state agriculture departments can host and adapt.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="small muted">Impact will be measured in a pilot: irrigations saved per season, share of farmers adopting a legume or cover crop, and farmer-reported usefulness, compared with KVK records.</p>
+</section>
+
+<!-- ============ RISKS / ROADMAP ============ -->
+<section>
+  <h2><span class="num">15</span>Risks and mitigations</h2>
+  <table>
+    <thead><tr><th>Risk</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Wrong advice from coarse or cloudy data</td><td>Confidence levels, reasons and field-check reminders; advice phrased as suggestions; KVK validation before scale-up</td></tr>
+      <tr><td>Rule thresholds not suited to every region</td><td>Thresholds and crop parameters kept in one documented table for KVK tuning per agro-climatic zone</td></tr>
+      <tr><td>Data service outages or rate limits</td><td>Independent sources, caching, clear "unavailable" messages, alternative sources (e.g. MODIS via Planetary Computer)</td></tr>
+      <tr><td>Translation errors</td><td>One file per language for native-speaker review; automated checks for missing text</td></tr>
+      <tr><td>AI assistant inventing facts</td><td>Grounded in computed context; forbidden from inventing prices or schemes; told to state uncertainty; refusals handled</td></tr>
+      <tr><td>Connectivity in rural areas</td><td>Light pages, progressive loading; offline mode on the roadmap</td></tr>
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:6mm"><span class="num">16</span>Roadmap</h2>
+  <table>
+    <thead><tr><th style="width:18%">Phase</th><th>Deliverables</th></tr></thead>
+    <tbody>
+      <tr><td><b>Now</b> <span class="tag live">live</span></td><td>All features described in this proposal, deployed and tested.</td></tr>
+      <tr><td><b>Month 1–2</b></td><td>NASA Earthdata integration: SMAP L4 and GPM IMERG as daily numbers per field, ECOSTRESS 70 m ET and land-surface temperature for within-field water stress, GEDI biomass — fused on the same grids. Native-speaker review of all languages.</td></tr>
+      <tr><td><b>Month 3–4</b></td><td>Farmer logs: rain gauge, irrigation and soil-test results, used to correct model values per field. Phenology curve fitting for sowing and harvest dates. Offline support.</td></tr>
+      <tr><td><b>Season pilot</b></td><td>With one or two KVKs: validate stress findings and rotation advice on real fields; tune thresholds per zone; measure water saved and adoption.</td></tr>
+      <tr><td><b>After the pilot</b></td><td>Train supervised models on the labelled pilot data; add more crops and states; partner with state agriculture departments and farmer producer organisations.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ TEAM / CREDITS ============ -->
+<section>
+  <h2><span class="num">17</span>Team, originality and credits</h2>
+  <div class="callout"><b>Originality statement.</b> Our team previously built a separate farmer-assistant project (Kisanaiar). Kisan AI is a <b>new codebase written during the NASA Space Apps 2026 hackathon weekend</b>. It shares the goal of helping small farmers with NASA data and uses some of the same public data sources, but none of the earlier code. The commit history of the repository reflects this work.</div>
+  <h3>Links</h3>
+  <ul>
+    <li>Live app: kisan-ai-space-apps.vercel.app</li>
+    <li>Methods page: kisan-ai-space-apps.vercel.app/methods.html</li>
+    <li>Source code and full technical documentation: github.com/stagmate/Kisan-AI-NASA-Space-Apps (docs/DOCUMENTATION.md)</li>
+  </ul>
+  <h3>Data and technology credits</h3>
+  <ul class="small">
+    <li><b>NASA:</b> POWER (Langley Research Center); MODIS MOD13Q1/MYD13Q1 v061 (LP DAAC); GIBS / Worldview layers including SMAP L4, GPM IMERG, MODIS land-surface temperature, Harmonized Landsat Sentinel-2, GRACE and GEDI.</li>
+    <li><b>Microsoft Planetary Computer</b> for cloud-optimised MODIS data.</li>
+    <li><b>ISRIC – World Soil Information:</b> SoilGrids 2.0 (CC BY 4.0).</li>
+    <li><b>Open-Meteo</b> forecast and elevation APIs (CC BY 4.0); <b>Copernicus DEM</b> © DLR / Airbus, provided under the ESA licence.</li>
+    <li><b>Government of India, data.gov.in / Agmarknet:</b> daily mandi prices (Government Open Data License – India).</li>
+    <li><b>OpenStreetMap contributors</b> (Nominatim, map tiles, ODbL) and <b>Esri</b> World Imagery.</li>
+    <li><b>Anthropic</b> Claude API for the multilingual assistant; Express, geotiff.js and Leaflet.</li>
+  </ul>
+  <p class="footer-note">Kisan AI provides decision support based on public Earth-observation and market data. It does not replace professional agronomic advice. Crop parameters are rounded planning values from FAO / ICAR guidance. Figures quoted in this proposal were produced by the live application on 14 November 2026 and change as new data arrive.</p>
+</section>
+
+</body>
+</html>
